@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EsfTest", "EsfTest\EsfTest.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompareSF", "CompareSF\CompareSF.csproj", "{4EC04957-A2B7-47CD-BA94-04CB3A77A7F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TDD_Rotate", "TDD_Rotate\TDD_Rotate.csproj", "{C93B03F6-89B6-4E23-90BC-FC6CDD4FCE0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{4EC04957-A2B7-47CD-BA94-04CB3A77A7F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EC04957-A2B7-47CD-BA94-04CB3A77A7F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EC04957-A2B7-47CD-BA94-04CB3A77A7F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C93B03F6-89B6-4E23-90BC-FC6CDD4FCE0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C93B03F6-89B6-4E23-90BC-FC6CDD4FCE0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C93B03F6-89B6-4E23-90BC-FC6CDD4FCE0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C93B03F6-89B6-4E23-90BC-FC6CDD4FCE0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
