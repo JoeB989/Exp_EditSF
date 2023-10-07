@@ -695,7 +695,9 @@ namespace EsfControl {
 			return familyTree;
 		}
 
-		// hack!
+		// hack! from
+		//	!rom_campaign_28_08_2023
+		//		text/db/!rom_names.loc
 		// (either need the key names to change to have character name included,
 		// or use rpfm code to parse the appropriate campaign db)
 		static private Dictionary<string, string> hardcoded_names = new Dictionary<string, string>
@@ -717,7 +719,6 @@ namespace EsfControl {
 			{"names_name_2147365749",   "Istiel"},
 			{"names_name_2147365849",   "Míriel"},
 			{"names_name_2147366049",   "Bóth"},
-			{"names_name_2147366149",   "Azog"},
 			{"names_name_2147366349",   "Bruglug"},
 			{"names_name_2147367549",   "Marvane"},
 			{"names_name_2147363146",   "Baragund"},
@@ -1061,9 +1062,7 @@ namespace EsfControl {
 			{"names_name_2147364773",   "Hásufax"},
 			{"names_name_2147364973",   "Amroth"},
 			{"names_name_2147365073",   "Inglor"},
-			{"names_name_2147366373",   "Ragdush"},
 			{"names_name_2147366473",   "Skulrak"},
-			{"names_name_2147366673",   "Drulina"},
 			{"names_name_2147366773",   "Grukasha"},
 			{"names_name_2147366973",   "Bruglok"},
 			{"names_name_2147368073",   "Thora"},
@@ -1518,7 +1517,6 @@ namespace EsfControl {
 			{"names_name_2147364087",   "Varmhar"},
 			{"names_name_2147365787",   "Raudhil"},
 			{"names_name_2147365987",   "Khal"},
-			{"names_name_2147366487",   "Durmog"},
 			{"names_name_2147366587",   "Skulgasha"},
 			{"names_name_2147367087",   "Bruglaka"},
 			{"names_name_2147367487",   "Nasil"},
@@ -1686,6 +1684,36 @@ namespace EsfControl {
 			{"names_name_2147366891",   "Lugdush"},
 			{"names_name_2147367491",   "Abdan"},
 			{"names_name_2147367691",   "Rahimira"},
+			{"names_name_2147366149",   "Théodred"},
+			{"names_name_2147366372",   "Witch-king of Angmar"},
+			{"names_name_2147366373",   "Khamûl the Easterling"},
+			{"names_name_2147366377",   "Nazgûl"},
+			{"names_name_2147366381",   "Mouth of Sauron"},
+			{"names_name_2147366387",   "Gothmog"},
+			{"names_name_2147366424",   "Azgarzîr"},
+			{"names_name_2147366451",   "Dôlguzagar"},
+			{"names_name_2147366472",   "Gimlân"},
+			{"names_name_2147366487",   "Pharazôn"},
+			{"names_name_2147366503",   "Tarîkmagân"},
+			{"names_name_2147366519",   "Zadnazîr"},
+			{"names_name_2147366525",   "Zâinabên"},
+			{"names_name_2147366529",   "Zimrathôn"},
+			{"names_name_2147366544",   "Zôrzagar"},
+			{"names_name_2147366554",   "Shagrat"},
+			{"names_name_2147366560",   "Grishnákh"},
+			{"names_name_2147366565",   "Gorbag"},
+			{"names_name_2147366610",   "Atalnancar"},
+			{"names_name_2147366619",   "Saruman"},
+			{"names_name_2147366628",   "Lúrtz"},
+			{"names_name_2147366632",   "Uglúk"},
+			{"names_name_2147366640",   "Mauhúr"},
+			{"names_name_2147366649",   "Lugdush"},
+			{"names_name_2147366365",   "Sauron"},
+			{"names_name_2147366653",   "I"},
+			{"names_name_2147366663",   "II"},
+			{"names_name_2147366673",   "III"},
+			{"names_name_2147366679",   "Ironfoot"},
+			{"names_name_2147366686",   "Stonehelm"},
 		};
 	}
 
