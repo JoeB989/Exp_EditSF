@@ -309,7 +309,12 @@ namespace EsfControl {
 
             ParentNode factionNode = ((ParentNode)factionEntryNode).Children[0];
             var nodes = new ParentNode[] { factionNode };
-            var cfg = new ReportConfig() { EconomicReport = true, CharacterReport = true }; //TEMP
+            var cfg = new ReportConfig() {
+				EconomicReport = true,
+				CharacterReport = true,
+				ArmyReport = true,
+				OmitGarrisons = true,
+			};
             ShowFactionsReport(nodes, familyTree, cfg);
         }
 
@@ -317,7 +322,9 @@ namespace EsfControl {
         {
             public bool EconomicReport;
             public bool CharacterReport;
-        }
+			public bool ArmyReport;
+			public bool OmitGarrisons;
+		}
 
 
 		private void ShowFactionsReport(ParentNode[] nodes, List<FamilyMember> familyTree, ReportConfig cfg)
@@ -367,6 +374,9 @@ namespace EsfControl {
 
 			if (cfg.CharacterReport)
 				CharacterReport(factionNode, report, game_year, game_month, familyTree);
+
+			if (cfg.ArmyReport)
+				ArmyReport(factionNode, report, cfg);
 		}
 
 		private void EconomicReport(ParentNode factionNode, StringBuilder report)
@@ -623,6 +633,108 @@ namespace EsfControl {
 			if (game_month < birth_month)
 				age--;
 			return age;
+		}
+
+		private void ArmyReport(ParentNode factionNode, StringBuilder report, ReportConfig cfg)
+		{
+			report.Append("  Armies (");
+			if (cfg.OmitGarrisons)
+				report.Append("garrisons omitted, ");
+			report.AppendLine("player-named in quotes)");
+			var armies = findChild(factionNode, "ARMY_ARRAY");
+			int armyIndex = 0;
+			foreach (var armyNode in armies.Children)
+			{
+				var militaryForce = findChild(armyNode, "MILITARY_FORCE");
+				var militaryForceLegacy = findChild(militaryForce, "MILITARY_FORCE_LEGACY");
+				reportArmy(militaryForceLegacy, armyIndex, report, cfg.OmitGarrisons);
+				armyIndex++;
+			}
+
+			report.AppendLine("  Legacy armies");
+			var legacyPool = findChild(factionNode, "MILITARY_FORCE_LEGACY_POOL");
+			var legacies = findChild(legacyPool, "LEGACIES");
+			armyIndex = 0;
+			foreach (var legacyNode in legacies.Children)
+			{
+				var militaryForceLegacy = legacyNode.Children[0];
+				reportArmy(militaryForceLegacy, armyIndex, report, cfg.OmitGarrisons);
+				armyIndex++;
+			}
+		}
+
+		private void reportArmy(ParentNode militaryForceLegacy, int armyIndex, StringBuilder report, bool omitGarrisons)
+		{
+			uint armyId = ((OptimizedUIntNode)militaryForceLegacy.Values[0]).Value;
+			string armyName;
+			bool isGarrison = GetArmyName(militaryForceLegacy, out armyName);
+			if (isGarrison && omitGarrisons)
+				return;
+
+			var campaignSkills = findChild(militaryForceLegacy, "CAMPAIGN_SKILLS");
+			uint rank = ((OptimizedUIntNode)campaignSkills.Values[5]).Value + 1;	// 0-based
+			uint experience = ((OptimizedUIntNode)campaignSkills.Values[6]).Value;
+
+			report.AppendFormat("  [{0}] {1} id:{2} rank:{3} experience:{4}\n", armyIndex, armyName, armyId, rank, experience);
+
+			// skills
+			//report.AppendLine("    skills:");
+			var skillsBlock = findChild(campaignSkills, "CAMPAIGN_SKILLS_BLOCK");
+			foreach (ParentNode skill in skillsBlock.Children)
+			{
+				string name = ((StringNode)skill.Values[0]).Value;
+				uint level = ((OptimizedUIntNode)skill.Values[3]).Value;
+				report.AppendFormat("      {0}  level:{1}\n", name, level);
+			}
+		}
+
+		static private bool GetArmyName(ParentNode militaryForceLegacy, out string name)
+		{
+			const string GarrisonName = "random_localisation_strings_string_military_force_legacy_name_garrison_army";
+			const string LegioHeader = "region_groups_localised_name_roman_legacy_generic_";
+
+			var localization = findChild(militaryForceLegacy, "CAMPAIGN_LOCALISATION");
+			name = ((StringNode)localization.Values[0]).Value;
+			bool garry = false;
+			if (name == GarrisonName)
+			{
+				name = "Garrison Army";
+				garry = true;
+			}
+			else if (string.IsNullOrWhiteSpace(name))
+				name = "\"" + ((StringNode)localization.Values[1]).Value + "\"";
+			else if (name.StartsWith(LegioHeader))
+			{
+				// TEMPORARY: convert a stock name to "Legio nn <name>"
+				//var history = findChild(militaryForceLegacy, "MILITARY_FORCE_LEGACY_HISTORY");
+				//uint legio = ((OptimizedUIntNode)history.Values[2]).Value;
+				uint legio = ((OptimizedUIntNode)militaryForceLegacy.Values[4]).Value;
+				string actual = name.Substring(LegioHeader.Length, 1).ToUpper() + name.Substring(LegioHeader.Length+1); ;
+				name = string.Format("Legio {0} {1}", ToRoman(legio), actual);
+			}
+
+			return garry;
+		}
+
+		// from https://stackoverflow.com/questions/7040289/converting-integers-to-roman-numerals?page=1&tab=scoredesc#tab-top
+		static private string ToRoman(uint number)
+		{
+			if ((number < 0) || (number > 3999)) throw new ArgumentOutOfRangeException(nameof(number), "insert value between 1 and 3999");
+			if (number < 1) return string.Empty;
+			if (number >= 1000) return "M" + ToRoman(number - 1000);
+			if (number >= 900) return "CM" + ToRoman(number - 900);
+			if (number >= 500) return "D" + ToRoman(number - 500);
+			if (number >= 400) return "CD" + ToRoman(number - 400);
+			if (number >= 100) return "C" + ToRoman(number - 100);
+			if (number >= 90) return "XC" + ToRoman(number - 90);
+			if (number >= 50) return "L" + ToRoman(number - 50);
+			if (number >= 40) return "XL" + ToRoman(number - 40);
+			if (number >= 10) return "X" + ToRoman(number - 10);
+			if (number >= 9) return "IX" + ToRoman(number - 9);
+			if (number >= 5) return "V" + ToRoman(number - 5);
+			if (number >= 4) return "IV" + ToRoman(number - 4);
+			if (number >= 1) return "I" + ToRoman(number - 1);
+			throw new InvalidOperationException("Impossible state reached");
 		}
 
 		static private ParentNode findChild(ParentNode node, string childName)
