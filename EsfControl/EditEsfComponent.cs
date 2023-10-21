@@ -663,6 +663,8 @@ namespace EsfControl {
 			}
 		}
 
+		private Dictionary<string, int> units = new Dictionary<string, int>();
+
 		private void reportArmy(ParentNode militaryForceLegacy, int armyIndex, StringBuilder report, bool omitGarrisons)
 		{
 			uint armyId = ((OptimizedUIntNode)militaryForceLegacy.Values[0]).Value;
@@ -685,6 +687,48 @@ namespace EsfControl {
 				string name = ((StringNode)skill.Values[0]).Value;
 				uint level = ((OptimizedUIntNode)skill.Values[3]).Value;
 				report.AppendFormat("      {0}  level:{1}\n", name, level);
+			}
+
+			// units - sibling of military force legacy, may not be present (for legacy armies)
+			var unitContainer = findChild((ParentNode) militaryForceLegacy.Parent, "UNIT_CONTAINER");
+			if (unitContainer != null)
+			{
+				var unitsArray = unitContainer.Children[0];
+				if (unitsArray.Children.Count > 0)
+				{
+					units.Clear();
+					foreach (var unitEntry in unitsArray.Children)
+					{
+						var unit = unitEntry.Children[0];
+						var unitRecordKey = findChild(unit, "UNIT_RECORD_KEY");
+						var unitType = ((StringNode)unitRecordKey.Values[0]).Value;
+
+						if (units.ContainsKey(unitType))
+							units[unitType]++;
+						else
+							units[unitType] = 1;
+					}
+
+					report.AppendFormat("      {0} unit", unitsArray.Children.Count);
+					if (unitsArray.Children.Count > 1)
+						report.Append("s");
+					report.Append(":");
+
+					int i = 0;
+					foreach (KeyValuePair<string,int> unit in units)
+					{
+						if (i > 0)
+						{
+							if ((i & 3) == 0)
+								report.AppendFormat("\n               ");
+							else
+								report.AppendFormat(",");
+						}
+						report.AppendFormat(" {0} {1}", unit.Value, unit.Key);
+						i++;
+					}
+					report.AppendLine();
+				}
 			}
 		}
 
