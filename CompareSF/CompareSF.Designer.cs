@@ -73,6 +73,7 @@ namespace CompareSF
             this.columnHeader1});
 			this.OutputListView.FullRowSelect = true;
 			this.OutputListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+			this.OutputListView.HideSelection = false;
 			this.OutputListView.Location = new System.Drawing.Point(12, 12);
 			this.OutputListView.Name = "OutputListView";
 			this.OutputListView.ShowGroups = false;
@@ -84,6 +85,7 @@ namespace CompareSF
 			// 
 			// columnHeader1
 			// 
+			this.columnHeader1.Text = "Differences";
 			this.columnHeader1.Width = 1000;
 			// 
 			// CompareSF

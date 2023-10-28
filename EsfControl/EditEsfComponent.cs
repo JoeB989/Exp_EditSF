@@ -278,7 +278,7 @@ namespace EsfControl {
 
 		private void AllFactionEconomicsReport(EsfNode factionArrayNode)
 		{
-			AllFactionsReport(factionArrayNode, new ReportConfig() { EconomicReport = true });
+			AllFactionsReport(factionArrayNode, new ReportConfig() { EconomicReport = true, ShowDiplomacy = true });
 		}
 
 		private void AllFactionCharactersReport(EsfNode factionArrayNode)
@@ -288,6 +288,7 @@ namespace EsfControl {
 
 		private void AllFactionsReport(EsfNode factionArrayNode, ReportConfig cfg)
         {
+			GetAllFactions(factionArrayNode);
             ParentNode worldNode = (ParentNode)factionArrayNode.Parent;
             ParentNode FamilyTreeNode = findChild(worldNode, "FAMILY_TREE");
             List<FamilyMember> familyTree = ScanFamilyTree(FamilyTreeNode);
@@ -303,7 +304,8 @@ namespace EsfControl {
 
         private void OneFactionReport(EsfNode factionEntryNode)
         {
-            ParentNode worldNode = (ParentNode)factionEntryNode.Parent.Parent;
+			GetAllFactions(factionEntryNode.Parent);
+			ParentNode worldNode = (ParentNode)factionEntryNode.Parent.Parent;
             ParentNode FamilyTreeNode = findChild(worldNode, "FAMILY_TREE");
             List<FamilyMember> familyTree = ScanFamilyTree(FamilyTreeNode);
 
@@ -314,6 +316,7 @@ namespace EsfControl {
 				CharacterReport = true,
 				ArmyReport = true,
 				OmitGarrisons = true,
+				ShowDiplomacy = true,
 			};
             ShowFactionsReport(nodes, familyTree, cfg);
         }
@@ -324,8 +327,37 @@ namespace EsfControl {
             public bool CharacterReport;
 			public bool ArmyReport;
 			public bool OmitGarrisons;
+			public bool ShowDiplomacy;
 		}
 
+		private class Faction
+		{
+			// one faction
+			public string Name;
+			public uint Id;
+			public ParentNode FactionArrayNode;
+
+			// temporary - test faction's relations with this faction
+			public string Relationship;
+		}
+		private List<Faction> Factions = new List<Faction>();
+
+		private void GetAllFactions(EsfNode factionArrayNode)
+		{
+			Factions.Clear();
+
+			foreach (ParentNode factionEntryNode in ((ParentNode)factionArrayNode).Children)
+			{
+				Faction faction = new Faction();
+				faction.FactionArrayNode = factionEntryNode;
+
+				ParentNode factionNode = factionEntryNode.Children[0];
+				faction.Id = ((OptimizedUIntNode)(factionNode.Values[0])).Value;
+				faction.Name = ((StringNode)(factionNode.Values[1])).Value;
+
+				Factions.Add(faction);
+			}
+		}
 
 		private void ShowFactionsReport(ParentNode[] nodes, List<FamilyMember> familyTree, ReportConfig cfg)
 		{
@@ -366,11 +398,24 @@ namespace EsfControl {
 		private void buildFactionReport(ParentNode factionNode, StringBuilder report,
 			uint game_year, uint game_month, List<FamilyMember> familyTree, ReportConfig cfg)
 		{
-			string factionName = ((StringNode)(factionNode.AllNodes[1])).Value;
-			report.AppendFormat("Faction: {0}\n", factionName);
+			var arrayNode = (ParentNode) factionNode.Parent;
+			const string skip = "FACTION_ARRAY - ";
+			int index = 0;
+			if (arrayNode.Name.StartsWith(skip))
+			{
+				string number = arrayNode.Name.Substring(skip.Length).Trim();
+				int.TryParse(number, out index);
+			}
+
+			uint factionId = ((OptimizedUIntNode)(factionNode.Values[0])).Value;
+			string factionName = ((StringNode)(factionNode.Values[1])).Value;
+			report.AppendFormat("Faction[{0}]: {1} (id:{2})\n", index, factionName, factionId);
 
 			if (cfg.EconomicReport)
 				EconomicReport(factionNode, report);
+
+			if (cfg.ShowDiplomacy)
+				DiplomacyReport(factionNode, report);
 
 			if (cfg.CharacterReport)
 				CharacterReport(factionNode, report, game_year, game_month, familyTree);
@@ -447,6 +492,67 @@ namespace EsfControl {
 			report.AppendFormat("      Other            {0,10:#,#}   Other       {1,10:#,#}\n", otherIncome, otherExpense);
 			report.AppendLine  ("                       ----------               ----------");
 			report.AppendFormat("                       {0,10:#,#}               {1,10:#,#}    = {2:#,#} net income\n", totalIncome, totalExpense, totalIncome + totalExpense);
+		}
+
+		private void DiplomacyReport(ParentNode factionNode, StringBuilder report)
+		{
+			const string NEUTRAL = "neutral";
+			readDiplomacy(factionNode);
+			Dictionary<string, string> relationships = new Dictionary<string, string>();
+			foreach (var faction in Factions)
+			{
+				if (faction.Relationship != null)
+				{
+					if (relationships.ContainsKey(faction.Relationship))
+						relationships[faction.Relationship] += ", " + faction.Name;
+					else
+						relationships[faction.Relationship] = faction.Name;
+				}
+			}
+
+			uint warCoord_TargetSettlementId = ((OptimizedUIntNode)(factionNode.Values[46])).Value;
+			uint warCoord_TargetArmyId = ((OptimizedUIntNode)(factionNode.Values[47])).Value;
+			bool alliesCoordinating = ((OptimizedBoolNode)(factionNode.Values[48])).Value;
+
+			report.AppendLine("  Diplomacy:");
+			var list = from rel in relationships
+					   where rel.Key != NEUTRAL
+					   orderby rel.Key
+					   select rel;
+			foreach (var rel in list)
+			{
+				report.AppendFormat("    {0}: {1}\n", rel.Key, rel.Value);
+			}
+
+			if (warCoord_TargetSettlementId != 0)
+				report.AppendFormat("    War Coordination targeting settlement {0}\n", warCoord_TargetSettlementId);
+			if (warCoord_TargetArmyId != 0)
+				report.AppendFormat("    War Coordination targeting army {0}\n", warCoord_TargetArmyId);
+			if (alliesCoordinating)
+			{
+				report.AppendFormat("    Allies have joined War Coordination\n");
+			}
+		}
+
+		private void readDiplomacy(ParentNode factionNode)
+		{
+			foreach (Faction faction in Factions)
+				faction.Relationship = null;
+
+			var diploManager = findChild(factionNode, "OLD_DIPLOMACY_MANAGER");
+			var relationshipArray = diploManager.Children[0];
+			foreach (var arrayEntry in relationshipArray.Children)
+			{
+				var factionRelationship = arrayEntry.Children[0];
+				uint factionId = ((OptimizedUIntNode)(factionRelationship.Values[0])).Value;
+				string relationship = ((StringNode)(factionRelationship.Values[3])).Value;
+
+				var f = (from faction in Factions
+						 where faction.Id == factionId
+						 select faction).FirstOrDefault();
+				if (f != null)
+					f.Relationship = relationship;
+			}
 		}
 
 		private void CharacterReport(ParentNode factionNode, StringBuilder report,
@@ -739,25 +845,23 @@ namespace EsfControl {
 
 			var localization = findChild(militaryForceLegacy, "CAMPAIGN_LOCALISATION");
 			name = ((StringNode)localization.Values[0]).Value;
-			bool garry = false;
+			bool mrGarrison = false;
 			if (name == GarrisonName)
 			{
 				name = "Garrison Army";
-				garry = true;
+				mrGarrison = true;
 			}
 			else if (string.IsNullOrWhiteSpace(name))
 				name = "\"" + ((StringNode)localization.Values[1]).Value + "\"";
 			else if (name.StartsWith(LegioHeader))
 			{
 				// TEMPORARY: convert a stock name to "Legio nn <name>"
-				//var history = findChild(militaryForceLegacy, "MILITARY_FORCE_LEGACY_HISTORY");
-				//uint legio = ((OptimizedUIntNode)history.Values[2]).Value;
 				uint legio = ((OptimizedUIntNode)militaryForceLegacy.Values[4]).Value;
 				string actual = name.Substring(LegioHeader.Length, 1).ToUpper() + name.Substring(LegioHeader.Length+1); ;
 				name = string.Format("Legio {0} {1}", ToRoman(legio), actual);
 			}
 
-			return garry;
+			return mrGarrison;
 		}
 
 		// from https://stackoverflow.com/questions/7040289/converting-integers-to-roman-numerals?page=1&tab=scoredesc#tab-top
