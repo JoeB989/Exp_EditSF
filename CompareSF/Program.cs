@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CompareSF
+namespace CompareSFns
 {
 	static class Program
 	{
@@ -12,8 +12,8 @@ namespace CompareSF
 		/// Total War (Attila) save file comparator.  Compares 2 or more save game files and displays
 		/// their differences.
 		/// 
-		/// Temporarily only supports files on command line.  Usage:
-		///		CompareSF  file1.save  file2.save  [file3.save ...]
+		/// Optionally supply filenames on command line to pre-populate the file list
+		///		CompareSF  [file1.save  file2.save  ...]
 		/// </summary>
 		/// <remarks>
 		/// So far only tested with TW Attila save files
@@ -31,14 +31,7 @@ namespace CompareSF
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 
-			if (args.Length < 2)
-			{
-				MessageBox.Show("Usage:  CompareSF.exe  file1  file2  [file3 etc.]", "CompareSF", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-			else
-			{
-				Application.Run(new CompareSF(args));
-			}
+			Application.Run(new CompareSF(args));
 		}
 	}
 }

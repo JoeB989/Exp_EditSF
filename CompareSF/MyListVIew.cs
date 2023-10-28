@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CompareSF
+namespace CompareSFns
 {
 	/// <summary>
 	/// Solution for ListView unnecessary flickering from

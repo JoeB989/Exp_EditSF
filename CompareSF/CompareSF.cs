@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CompareSF
+namespace CompareSFns
 {
 	public partial class CompareSF : Form
 	{
@@ -23,7 +23,31 @@ namespace CompareSF
 			OutputListView.RetrieveVirtualItem += OutputListView_RetrieveVirtualItem;
 			OutputListView.CacheVirtualItems += OutputListView_CacheVirtualItems;
 
-			CreateSaveFiles(files);
+			AddSaveFiles(files);
+
+			clearButton.Enabled = SaveFiles.Count > 0;
+			startButton.Enabled = SaveFiles.Count > 1;
+		}
+		private void StartCompare()
+		{
+			this.Cursor = Cursors.WaitCursor;
+			clearButton.Enabled = false;
+			addButton.Enabled = false;
+			startButton.Enabled = false;
+			Lines.Clear();
+			OutputListView.VirtualListSize = 0;
+
+			StringBuilder sb = new StringBuilder();
+			bool first = true;
+			foreach (SaveFile sf in SaveFiles)
+			{
+				if (!first)
+					sb.Append(" ,");
+				first = false;
+				sb.Append(sf.Name);
+			}
+			this.Text = "CompareSF:  Comparing " + sb.ToString();
+
 			StatusBar.Text = "Reading files ...";
 			backgroundCompare.RunWorkerAsync();
 		}
@@ -61,7 +85,7 @@ namespace CompareSF
 
 		private void BackgroundCompare_DoWork(object sender, DoWorkEventArgs e)
 		{
-			CompareFiles();
+			DoCompare();
 			e.Result = true;
 		}
 
@@ -76,6 +100,11 @@ namespace CompareSF
 			}
 			else
 				StatusBar.Text = "Done.";
+
+			clearButton.Enabled = SaveFiles.Count > 0;
+			addButton.Enabled = true;
+			startButton.Enabled = startButton.Enabled = SaveFiles.Count > 1;
+			this.Cursor = Cursors.Default;
 		}
 
 		private void BackgroundCompare_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -83,20 +112,13 @@ namespace CompareSF
 			List<string> results = (List<string>)e.UserState;
 
 			StatusBar.Text = "Comparing ...";
-			//OutputListBox.Text += content;
-			//OutputListBox.Items.AddRange(results.ToArray());
-			//OutputListBox.SelectedIndex = OutputListBox.Items.Count - 1;
 			Lines.AddRange(results);
 
 			// Updating this often causes flickering.  With the virtual listview, we could optionally
 			// delay updating this to once every few seconds, and then on done or abort
-			// TODO: a simple 5-second timer to update VirtualListSize if != Lines.Count 
-			// Or every 100 lines
 
-			//OutputListView.SuspendLayout();
 			if (Lines.Count > 100 + OutputListView.VirtualListSize)
 				OutputListView.VirtualListSize = Lines.Count;
-			//OutputListView.ResumeLayout();
 		}
 
 		private struct SaveFile
@@ -107,70 +129,32 @@ namespace CompareSF
 			public ParentNode RootNode;
 		}
 
-		private SaveFile[] SaveFiles;
+		private List<SaveFile> SaveFiles = new List<SaveFile>();
 
-		private void CreateSaveFiles(string[] files)
+		private void AddSaveFiles(string[] files)
 		{
-			int count = files.Length;
-			StringBuilder sb = new StringBuilder();
-
-			SaveFiles = new SaveFile[count];
-
-			for (int file = 0; file < files.Length; file++)
+			foreach (string file in files)
 			{
-				SaveFiles[file] = new SaveFile();
-				SaveFiles[file].FilePath = files[file];
-				SaveFiles[file].Name = Path.GetFileName(SaveFiles[file].FilePath);
+				var sf = new SaveFile();
+				sf.FilePath = file;
+				sf.Name = Path.GetFileName(sf.FilePath);
+				sf.Data = EsfCodecUtil.LoadEsfFile(sf.FilePath);
+				sf.RootNode = (ParentNode)sf.Data.RootNode;
 
-				if (file > 0)
-					sb.Append(" ,");
-				sb.Append(SaveFiles[file].Name);
+				SaveFiles.Add(sf);
 
-				SaveFiles[file].Data = EsfCodecUtil.LoadEsfFile(SaveFiles[file].FilePath);
-				SaveFiles[file].RootNode = (ParentNode)SaveFiles[file].Data.RootNode;
+				fileListView.Items.Add(sf.Name);
 			}
-
-			this.Text = "CompareSF:  Comparing " + sb.ToString();
 		}
 
-		private void CompareFiles()
+		private void DoCompare()
 		{
 			Lines.Clear();
-			//OutputListBox.ResetText();
-			//int count = SaveFiles.Length;
-
-			//SaveFiles = new SaveFile[count];
-
-			//for (int file = 0; file < files.Length; file++)
-			//{
-			//	SaveFiles[file] = new SaveFile();
-			//	SaveFiles[file].FilePath = files[file];
-			//	SaveFiles[file].Name = Path.GetFileName(SaveFiles[file].FilePath);
-
-			//	if (file > 0)
-			//		sb.Append(" ,");
-			//	sb.Append(SaveFiles[file].Name);
-
-			//	SaveFiles[file].Data = EsfCodecUtil.LoadEsfFile(SaveFiles[file].FilePath);
-			//	SaveFiles[file].RootNode = (ParentNode) SaveFiles[file].Data.RootNode;
-			//}
-
-			//this.Text = "CompareSF:  Comparing " + sb.ToString();
-
-			//sb.Clear();
 			string path = SaveFiles[0].RootNode.Name;
 			var roots = (from file in SaveFiles
 						 select (EsfNode) file.RootNode).ToList();
 
 			CompareNodeAndChildren(path, roots);
-
-			// TEMP: just output simple text for now
-			//int x = sb.Length;
-			//var ret = MessageBox.Show(sb.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			//if (ret == DialogResult.OK)
-			//{
-			//	Clipboard.SetText(sb.ToString());
-			//}
 		}
 
 		private void CompareNodeAndChildren(string path, IList<EsfNode> fileNodes)
@@ -223,28 +207,21 @@ namespace CompareSF
 					if (! foundDiff)
 					{
 						results.Add(path);
-						//sb.AppendLine(path);
 						foundDiff = true;
 					}
 					sb.AppendFormat(" [{0}]:", v);
 					for (int file=0; file < fileValues.Length; file++)
 					{
-						//sb.AppendFormat("  {0}: {1}", SaveFiles[file].Name, fileValues[file]);
 						if (file > 0)
 							sb.Append(",");
 						sb.AppendFormat(" {0}", fileValues[file]);
 					}
-					//sb.AppendLine();
 					results.Add(sb.ToString());
 					sb.Clear();
 				}
 			}
 			if (results.Count > 0)
-			{
-				//System.Diagnostics.Debug.Write(sb.ToString());	// TEMP
-				//OutputListBox.Text += (sb.ToString());
 				backgroundCompare.ReportProgress(0, results);
-			}
 		}
 
 		private void CompareChildren(string path, IList<EsfNode> fileNodes)
@@ -299,6 +276,30 @@ namespace CompareSF
 				sb.AppendLine(item);
 			if (sb.Length > 0)	// because SetText throws NullReferenceException if string is "" (which isn't null)
 				Clipboard.SetText(sb.ToString());
+		}
+
+		private void addButton_Click(object sender, EventArgs e)
+		{
+			OpenFileDialog ofd = new OpenFileDialog();
+			ofd.Filter = "save files (*.save)|*.save|All files (*.*)|*.*";
+			if (ofd.ShowDialog(this) == DialogResult.OK)
+				AddSaveFiles(new string[] { ofd.FileName });
+
+			clearButton.Enabled = SaveFiles.Count > 0;
+			startButton.Enabled = SaveFiles.Count > 1;
+		}
+
+		private void startButton_Click(object sender, EventArgs e)
+		{
+			StartCompare();
+		}
+
+		private void clearButton_Click(object sender, EventArgs e)
+		{
+			SaveFiles.Clear();
+			fileListView.Clear();
+			clearButton.Enabled = false;
+			startButton.Enabled = SaveFiles.Count > 1;
 		}
 	}
 }
