@@ -101,6 +101,7 @@ namespace EditSF {
                         item.Enabled = true;
                     }
                 }
+                reportsToolStripMenuItem.Visible = true;
             } catch (Exception exception) {
                 statusLabel.Text = oldStatus;
                 Console.WriteLine(exception);
@@ -245,9 +246,24 @@ namespace EditSF {
         private void showNodeTypeToolStripMenuItem_Click(object sender, EventArgs e) {
             editEsfComponent.ShowCode = true;
         }
+
+		private void playerFactionReportToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+            editEsfComponent.PlayerFactionReport();
+        }
+
+		private void allFactionsEconomicsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+            editEsfComponent.AllFactionEconomicsReport();
+        }
+
+        private void allFactionsCharactersToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+            editEsfComponent.AllFactionCharactersReport();
+        }
     }
-    
-    public class LogFileWriter {
+
+	public class LogFileWriter {
         private TextWriter writer;
         public LogFileWriter(string logFileName) {
             writer = File.CreateText(logFileName);
