@@ -545,8 +545,6 @@ namespace EsfControl
 			}
 		}
 
-		static private Dictionary<string, int> units = new Dictionary<string, int>();
-
 		static private void reportArmy(ParentNode militaryForceLegacy, int armyIndex, StringBuilder report, bool omitGarrisons)
 		{
 			uint armyId = ((OptimizedUIntNode)militaryForceLegacy.Values[0]).Value;
@@ -572,13 +570,14 @@ namespace EsfControl
 			}
 
 			// units - sibling of military force legacy, may not be present (for legacy armies)
-			var unitContainer = findChild((ParentNode)militaryForceLegacy.Parent, "UNIT_CONTAINER");
+			ParentNode parent = (ParentNode)militaryForceLegacy.Parent;
+			var unitContainer = findChild(parent, "UNIT_CONTAINER");
 			if (unitContainer != null)
 			{
 				var unitsArray = unitContainer.Children[0];
 				if (unitsArray.Children.Count > 0)
 				{
-					units.Clear();
+					Dictionary<string, int> units = new Dictionary<string, int>();
 					foreach (var unitEntry in unitsArray.Children)
 					{
 						var unit = unitEntry.Children[0];
@@ -595,23 +594,64 @@ namespace EsfControl
 					if (unitsArray.Children.Count > 1)
 						report.Append("s");
 					report.Append(":");
+					reportUnits(units, report);
+				}
+			}
 
+			// siege equipment if present
+			var siege = findChild(parent, "SIEGE");
+			if (siege != null)
+			{
+				var siegeMgr = findChild(siege, "SIEGE_EQUIPMENT_BUILD_MANAGER");
+				var builtArray = ((EsfArrayNode<string>)(siegeMgr.Values[0])).Value;
+
+				Dictionary<string, int> siegeEquipment = new Dictionary<string, int>();
+				foreach (string eq in builtArray)
+				{
+					if (siegeEquipment.ContainsKey(eq))
+						siegeEquipment[eq]++;
+					else
+						siegeEquipment[eq] = 1;
+				}
+
+				report.AppendFormat("      {0} siege equipment:", builtArray.Length);
+				reportUnits(siegeEquipment, report);
+
+				// siege build queue
+				var buildQueue = findChild(siegeMgr, "SIEGE_ITEM_ARRAY");
+				if (buildQueue != null)
+				{
+					report.Append("      siege build queue:");
 					int i = 0;
-					foreach (KeyValuePair<string, int> unit in units)
+					foreach (var siegeItem in buildQueue.Children)
 					{
+						string name = ((StringNode)(siegeItem.Children[0]).Values[1]).Value;
 						if (i > 0)
-						{
-							if ((i & 3) == 0)
-								report.AppendFormat("\n               ");
-							else
-								report.AppendFormat(",");
-						}
-						report.AppendFormat(" {0} {1}", unit.Value, unit.Key);
+							report.Append(",");
+						report.AppendFormat(" {0}", name);
 						i++;
 					}
 					report.AppendLine();
 				}
 			}
+		}
+
+		static private void reportUnits(Dictionary<string, int> units, StringBuilder report)
+		{
+			int i = 0;
+			foreach (KeyValuePair<string, int> unit in units)
+			{
+				if (i > 0)
+				{
+					if ((i & 3) == 0)
+						report.AppendFormat("\n               ");
+					else
+						report.AppendFormat(",");
+				}
+				report.AppendFormat(" {0} {1}", unit.Value, unit.Key);
+				i++;
+			}
+			report.AppendLine();
 		}
 
 		static private bool GetArmyName(ParentNode militaryForceLegacy, out string name)
