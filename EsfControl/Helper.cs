@@ -1,5 +1,6 @@
 ﻿using EsfLibrary;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -200,6 +201,11 @@ namespace EsfControl
 				ArmyReport(factionNode, report, cfg);
 		}
 
+		struct EconData
+		{
+			public Dictionary<int, Dictionary<int, int>> arrays;
+		}
+
 		static private void EconomicReport(ParentNode factionNode, StringBuilder report)
 		{
 			var economics = findChild(factionNode, "FACTION_ECONOMICS");
@@ -211,10 +217,21 @@ namespace EsfControl
 			int index = history.Children.Count - 1;
 			if (index >= 0)
 			{
-				var econData = history.Children[index].Children[0];
+				var econDataNode = history.Children[index].Children[0];
+				var econData = readEconData(econDataNode);
 
-				var array1 = ((OptimizedArrayNode<int>)econData.Values[1]).Value;
-				int taxes = (int)array1.GetValue(0);
+				// I thought they were always OptimizedArrayNode but apparently sometimes they are EsfArrayNode
+				//var array1 = ((OptimizedArrayNode<int>)econData.Values[1]).Value;
+				//int taxes = (int)array1.GetValue(0);
+				//int taxes = 0;
+				//var array1 = econDataNode.Values[1];
+				//var oan = array1 as OptimizedArrayNode<int>;
+				//var ean = array1 as EsfArrayNode<int>;
+				//if (oan != null)
+				//	taxes = (int)oan.Value.GetValue(0);
+				//else if (ean != null)
+				//	taxes = ean.Value[0];
+				int taxes = econData.arrays[1][0];
 				if (taxes == 0)
 				{
 					report.AppendLine("    Faction has been destroyed");
@@ -226,33 +243,64 @@ namespace EsfControl
 
 				if (index >= 1)
 				{
-					var priorData = history.Children[index - 1].Children[0];
+					var priorDataNode = history.Children[index - 1].Children[0];
+					var priorData = readEconData(priorDataNode);
 					report.AppendLine("    Last turn:");
 					reportEconData(priorData, report);
 				}
 			}
 		}
 
-		static private void reportEconData(ParentNode econData, StringBuilder report)
+		static private EconData readEconData(ParentNode econDataNode)
 		{
-			var array1 = ((OptimizedArrayNode<int>)econData.Values[1]).Value;
-			var array2 = ((OptimizedArrayNode<int>)econData.Values[2]).Value;
-			var array4 = ((OptimizedArrayNode<int>)econData.Values[4]).Value;
-			var array5 = ((OptimizedArrayNode<int>)econData.Values[5]).Value;
+			// I thought econ data were always OptimizedArrayNodes but apparently sometimes they are EsfArrayNodes
+			// So now need to handle both types
+			EconData data = new EconData();
+			data.arrays = new Dictionary<int, Dictionary<int, int>>();
+			for (int n=0; n < econDataNode.Values.Count; n++)
+			{
+				var node = econDataNode.Values[n];
+				data.arrays[n] = new Dictionary<int, int>();
+				if (node is OptimizedArrayNode<int>)
+				{
+					var oan = node as OptimizedArrayNode<int>;
+					for (int i=0; i < oan.Value.Length; i++)
+						data.arrays[n][i] = (int)oan.Value.GetValue(i);
+				}
+				else if (node is EsfArrayNode<int>)
+				{
+					var ean = node as EsfArrayNode<int>;
+					for (int i = 0; i < ean.Value.Length; i++)
+						data.arrays[n][i] = ean.Value[i];
+				}
+				else
+				{
+					throw new NotSupportedException("readEconData can't read node " + node.ToString());
+				}
+			}
+			return data;
+		}
 
-			int taxes = (int)array1.GetValue(0);
-			int slavery = (int)array1.GetValue(1);
-			int trade = (int)array1.GetValue(2);
-			int otherIncome = (int)array2.GetValue(4);
-			int maint = -(int)array5.GetValue(8);
-			int armyUpkeep = -(int)array5.GetValue(1);
-			int navyUpkeep = -(int)array5.GetValue(2); // TODO: guess, figure out
+		static private void reportEconData(EconData econData, StringBuilder report)
+		{
+			var array1 = econData.arrays[1];
+			var array2 = econData.arrays[2];
+			var array4 = econData.arrays[4];
+			var array5 = econData.arrays[5];
+
+			int taxes = array1[0];
+			int slavery = array1[1];
+			int trade = array1[2];
+			int otherIncome = array2[4];
+			int maint = -array5[8];
+			int armyUpkeep = -array5[1];
+			int navyUpkeep = -array5[2]; // TODO: guess, figure out
 			int otherExpense = 0; // TODO: figure out
-			int interest = (int)array1.GetValue(4);
+			int interest = array1[4];
 
 			// Current turn treasury deductions
 			// Don't show these as costs, since already deducted from treasury in-game.  Maybe report separately at some point.
-			int construction = -(int)array4.GetValue(0);
+			int construction = -array4[0];
 			int agentCosts = 0; // TBD
 			int recruitment = 0; // TBD
 
