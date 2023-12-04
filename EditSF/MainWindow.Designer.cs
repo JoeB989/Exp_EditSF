@@ -49,6 +49,8 @@
 			this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
 			this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
 			this.editEsfComponent = new EsfControl.EditEsfComponent();
+			this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+			this.verifySettlementsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.statusBar.SuspendLayout();
 			this.SuspendLayout();
@@ -123,21 +125,21 @@
 			// 
 			this.addBookmarkToolStripMenuItem.Enabled = false;
 			this.addBookmarkToolStripMenuItem.Name = "addBookmarkToolStripMenuItem";
-			this.addBookmarkToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+			this.addBookmarkToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.addBookmarkToolStripMenuItem.Text = "Add Bookmark";
 			this.addBookmarkToolStripMenuItem.Click += new System.EventHandler(this.AddBookmark);
 			// 
 			// editBookmarkToolStripMenuItem
 			// 
 			this.editBookmarkToolStripMenuItem.Name = "editBookmarkToolStripMenuItem";
-			this.editBookmarkToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+			this.editBookmarkToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.editBookmarkToolStripMenuItem.Text = "Edit Bookmarks";
 			this.editBookmarkToolStripMenuItem.Click += new System.EventHandler(this.EditBookmarks);
 			// 
 			// bookmarkSeparator
 			// 
 			this.bookmarkSeparator.Name = "bookmarkSeparator";
-			this.bookmarkSeparator.Size = new System.Drawing.Size(153, 6);
+			this.bookmarkSeparator.Size = new System.Drawing.Size(177, 6);
 			// 
 			// optionsToolStripMenuItem
 			// 
@@ -152,7 +154,7 @@
 			// 
 			this.writeLogFileToolStripMenuItem.CheckOnClick = true;
 			this.writeLogFileToolStripMenuItem.Name = "writeLogFileToolStripMenuItem";
-			this.writeLogFileToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+			this.writeLogFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.writeLogFileToolStripMenuItem.Text = "Write Log File";
 			// 
 			// showNodeTypeToolStripMenuItem
@@ -160,7 +162,7 @@
 			this.showNodeTypeToolStripMenuItem.CheckOnClick = true;
 			this.showNodeTypeToolStripMenuItem.Enabled = false;
 			this.showNodeTypeToolStripMenuItem.Name = "showNodeTypeToolStripMenuItem";
-			this.showNodeTypeToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+			this.showNodeTypeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.showNodeTypeToolStripMenuItem.Text = "Show Node Type";
 			this.showNodeTypeToolStripMenuItem.Click += new System.EventHandler(this.showNodeTypeToolStripMenuItem_Click);
 			// 
@@ -177,14 +179,14 @@
 			// runSingleTestToolStripMenuItem
 			// 
 			this.runSingleTestToolStripMenuItem.Name = "runSingleTestToolStripMenuItem";
-			this.runSingleTestToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+			this.runSingleTestToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.runSingleTestToolStripMenuItem.Text = "Run Load/Save Test";
 			this.runSingleTestToolStripMenuItem.Click += new System.EventHandler(this.runSingleTestToolStripMenuItem_Click);
 			// 
 			// runTestsStripMenuItem
 			// 
 			this.runTestsStripMenuItem.Name = "runTestsStripMenuItem";
-			this.runTestsStripMenuItem.Size = new System.Drawing.Size(176, 22);
+			this.runTestsStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			this.runTestsStripMenuItem.Text = "Multiple Tests";
 			this.runTestsStripMenuItem.Click += new System.EventHandler(this.runTestsToolStripMenuItem_Click);
 			// 
@@ -209,7 +211,9 @@
 			this.reportsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.playerFactionReportToolStripMenuItem,
             this.allFactionsEconomicsToolStripMenuItem,
-            this.allFactionsCharactersToolStripMenuItem});
+            this.allFactionsCharactersToolStripMenuItem,
+            this.toolStripMenuItem1,
+            this.verifySettlementsToolStripMenuItem});
 			this.reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
 			this.reportsToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
 			this.reportsToolStripMenuItem.Text = "Reports";
@@ -267,6 +271,18 @@
 			this.editEsfComponent.Size = new System.Drawing.Size(789, 745);
 			this.editEsfComponent.TabIndex = 3;
 			// 
+			// toolStripMenuItem1
+			// 
+			this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+			this.toolStripMenuItem1.Size = new System.Drawing.Size(193, 6);
+			// 
+			// verifySettlementsToolStripMenuItem
+			// 
+			this.verifySettlementsToolStripMenuItem.Name = "verifySettlementsToolStripMenuItem";
+			this.verifySettlementsToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+			this.verifySettlementsToolStripMenuItem.Text = "Verify Settlements";
+			this.verifySettlementsToolStripMenuItem.Click += new System.EventHandler(this.verifySettlementsToolStripMenuItem_Click);
+			// 
 			// EditSF
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -315,6 +331,8 @@
 		private System.Windows.Forms.ToolStripMenuItem playerFactionReportToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem allFactionsEconomicsToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem allFactionsCharactersToolStripMenuItem;
+		private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
+		private System.Windows.Forms.ToolStripMenuItem verifySettlementsToolStripMenuItem;
 	}
 }
 

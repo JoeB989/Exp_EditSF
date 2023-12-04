@@ -261,7 +261,12 @@ namespace EditSF {
 		{
             editEsfComponent.AllFactionCharactersReport();
         }
-    }
+
+		private void verifySettlementsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			editEsfComponent.VerificationReport();
+		}
+	}
 
 	public class LogFileWriter {
         private TextWriter writer;

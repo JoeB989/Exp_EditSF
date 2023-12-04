@@ -18,6 +18,12 @@ This clunky UI will be replaced at some point.
 ### Features
 New Reports main menu - this is where all reporting features will move to
 - Player Faction Report - gives a complete faction report on the player's faction.  Identical to Faction Report on FACTION_ARRAY - 0
+- All Factions Economcs - gives an economics report of all factions
+- All Factions Characters - give a report on all characters of all factions (family, nobles, candidates, agents)
+- Verify Settlements - Performs some simple verifications in a save file.  The intent is to offer a quick acceptance test "sanity check" that can be run against release candidate builds to verify no regression:
+  - no empty building slots
+  - all settlement buildings have a garrison
+  - wounded garrisons
 
 New menu commands on the Faction Array node (FACTION_ARRAY)
 - All Factions Economcs - gives an economics report of all factions
@@ -29,6 +35,8 @@ New menu commands on any Faction node (FACTION_ARRAY - nn)
  - you can open any faction array node, click on the FACTION child node, and look at the second value row to see which faction it is
 
 ### Planned enhancements
+- income from raiding
+- slave population econ data
 - army should list general and agent
 	- include general details in the army list
 - a Reports modeless dialog that
@@ -36,7 +44,6 @@ New menu commands on any Faction node (FACTION_ARRAY - nn)
 	- lets you checkbox report content
 	- remembers the report settings over loading new save file
 	- outputs results into dialog instead of message box (with Copy button)
-- slave population econ data
 
 ### Other possible enhancements
 - Campaign AI (CAI) details once I figure out that stuff
@@ -83,9 +90,10 @@ Known TDD region settlement rotations:
 which resolves to a fix list: 43,0,5;93,0,1;155,0,5
 
 ### Open issues and Concerns
-The intended direction is to embed the fix-list in a script or db entry and launch TDD_rotate at "an appropriate time" from a LUA script.
+The intended direction is to embed the fix-list in a script or db entry and launch TDD_rotate "at an appropriate time" from a LUA script.
 
-Warning: the command line from LUA is probably limited in length, can LUA set the working directory of the command?
+Warning: the command line from LUA is probably limited in length.
+Can LUA set the working directory of the command?
 Or should the app figure out Attila save directory and not need a path on the file names?
 
 I've been thinking about all the challenges to solve, and I'm not feeling good about this approach to fix save files.
@@ -116,7 +124,7 @@ Alternatively:
 2. wait while game loads
 3. after game loads, script determines it's a load not a new, does nothing
 	- but don't yet know how to detect new vs. load
-  
+
 And I haven't even mentioned the time it will take to do all this, even if everything works perfectly.
 
 ## How to build

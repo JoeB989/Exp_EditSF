@@ -33,7 +33,7 @@ namespace CompareSFns
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.StatusBar = new System.Windows.Forms.ToolStripStatusLabel();
 			this.CopyButton = new System.Windows.Forms.Button();
-			this.OutputListView = new CompareSFns.MyListView();
+			this.OutputListView = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.fileListView = new System.Windows.Forms.ListView();
 			this.addButton = new System.Windows.Forms.Button();
@@ -165,7 +165,7 @@ namespace CompareSFns
 		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel StatusBar;
 		private System.Windows.Forms.Button CopyButton;
-		private MyListView OutputListView;
+		private System.Windows.Forms.ListView OutputListView;
 		private System.Windows.Forms.ColumnHeader columnHeader1;
 		private System.Windows.Forms.ListView fileListView;
 		private System.Windows.Forms.Button addButton;

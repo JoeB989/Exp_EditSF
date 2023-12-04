@@ -142,6 +142,11 @@ namespace EsfControl {
 		{
             Helper.AllFactionCharactersReportFromRoot(RootNode);
 		}
+
+        public void VerificationReport()
+        {
+			Helper.VerificationReportFromRoot(RootNode);
+		}
 	}
 
     public class MouseHandler

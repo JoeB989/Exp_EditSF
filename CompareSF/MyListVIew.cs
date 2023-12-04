@@ -11,7 +11,8 @@ namespace CompareSFns
 	/// Solution for ListView unnecessary flickering from
 	///		https://stackoverflow.com/questions/21867801/cannot-get-listview-to-stop-flickering
 	/// </summary>
-	public partial class MyListView : ListView
+	[Obsolete("Trying without")]
+	public class MyListView : ListView
 	{
 		public MyListView()
 		{

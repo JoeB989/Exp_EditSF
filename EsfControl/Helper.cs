@@ -34,6 +34,13 @@ namespace EsfControl
 			OneFactionReport(factionNode);
 		}
 
+		static public void VerificationReportFromRoot(EsfNode rootNode)
+		{
+			if (rootNode == null)
+				return;
+			VerificationReport(rootNode, GetRegionArrayNode(rootNode));
+		}
+
 		static private ParentNode GetFactionArrayNode(EsfNode rootNode)
 		{
 			string[] nodeHierarchy =
@@ -44,9 +51,27 @@ namespace EsfControl
 				"WORLD",
 				"FACTION_ARRAY",
 			};
+			return WalkChildren(rootNode, nodeHierarchy);
+		}
 
+		static private ParentNode GetRegionArrayNode(EsfNode rootNode)
+		{
+			string[] nodeHierarchy =
+			{
+				"COMPRESSED_DATA",
+				"CAMPAIGN_ENV",
+				"CAMPAIGN_MODEL",
+				"WORLD",
+				"REGION_MANAGER",
+				"REGIONS_ARRAY",
+			};
+			return WalkChildren(rootNode, nodeHierarchy);
+		}
+
+		static private ParentNode WalkChildren(EsfNode rootNode, string[] nodeHierarchy)
+		{
 			ParentNode node = (ParentNode)rootNode;
-			for (int i = 0; i < nodeHierarchy.Length; i++)
+			for (int i = 0; (i < nodeHierarchy.Length) && (node != null); i++)
 				node = findChild(node, nodeHierarchy[i]);
 			return node;
 		}
@@ -91,7 +116,7 @@ namespace EsfControl
 				EconomicReport = true,
 				CharacterReport = true,
 				ArmyReport = true,
-				OmitGarrisons = true,
+				OmitGarrisons = false,//true,
 				ShowDiplomacy = true,
 			};
 			ShowFactionsReport(nodes, familyTree, cfg);
@@ -113,6 +138,9 @@ namespace EsfControl
 			public uint Id;
 			public ParentNode FactionArrayNode;
 
+			// this faction's armies
+			//public List<ParentNode> MilitaryForceLegacyNodes;
+
 			// temporary - test faction's relations with this faction
 			public string Relationship;
 		}
@@ -120,18 +148,20 @@ namespace EsfControl
 
 		static private void GetAllFactions(EsfNode factionArrayNode)
 		{
-			Factions.Clear();
-
-			foreach (ParentNode factionEntryNode in ((ParentNode)factionArrayNode).Children)
+			//Factions.Clear();
+			if (Factions.Count == 0)
 			{
-				Faction faction = new Faction();
-				faction.FactionArrayNode = factionEntryNode;
+				foreach (ParentNode factionEntryNode in ((ParentNode)factionArrayNode).Children)
+				{
+					Faction faction = new Faction();
+					faction.FactionArrayNode = factionEntryNode;
 
-				ParentNode factionNode = factionEntryNode.Children[0];
-				faction.Id = ((OptimizedUIntNode)(factionNode.Values[0])).Value;
-				faction.Name = ((StringNode)(factionNode.Values[1])).Value;
+					ParentNode factionNode = factionEntryNode.Children[0];
+					faction.Id = ((OptimizedUIntNode)(factionNode.Values[0])).Value;
+					faction.Name = ((StringNode)(factionNode.Values[1])).Value;
 
-				Factions.Add(faction);
+					Factions.Add(faction);
+				}
 			}
 		}
 
@@ -142,26 +172,13 @@ namespace EsfControl
 			while (rootNode.Parent != null)
 				rootNode = rootNode.Parent;
 
-			string title = System.Windows.Forms.Application.OpenForms[0].Text; // hack
-			int dotsave = title.IndexOf(".save", System.StringComparison.OrdinalIgnoreCase);
-			string savefile = (dotsave > 0) ? title.Substring(0, dotsave + 5) : title;
-
-			var saveGameHeader = findChild((ParentNode)rootNode, "SAVE_GAME_HEADER");
-			string playerFaction = ((StringNode)saveGameHeader.Values[0]).Value;
-			uint turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
-			var dateNode = findChild(saveGameHeader, "DATE");
-			uint year = ((OptimizedUIntNode)dateNode.Values[0]).Value;
-			uint month = ((OptimizedUIntNode)dateNode.Values[2]).Value; // 0-based
-			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)month + 1);
-			uint display_year = year - 752; // hack guess
-
 			StringBuilder report = new StringBuilder();
-			report.AppendFormat("Save file: {0}\n    Turn {1}, Year {2}, Month {3}\n    Player faction: {4}\n",
-				savefile, turn, display_year, monthName, playerFaction);
+			uint gameYear, gameMonth;
+			reportHeader(rootNode, report, out gameYear, out gameMonth);
 
 			foreach (var factionNode in nodes)
 			{
-				buildFactionReport(factionNode, report, year, month, familyTree, cfg);
+				buildFactionReport(factionNode, report, gameYear, gameMonth, familyTree, cfg);
 			}
 
 			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
@@ -169,6 +186,26 @@ namespace EsfControl
 			{
 				Clipboard.SetText(report.ToString());
 			}
+		}
+
+		static private void reportHeader(EsfNode rootNode, StringBuilder report, out uint gameYear, out uint gameMonth)
+		{
+
+			string title = Application.OpenForms[0].Text; // hack
+			int dotsave = title.IndexOf(".save", StringComparison.OrdinalIgnoreCase);
+			string savefile = (dotsave > 0) ? title.Substring(0, dotsave + 5) : title;
+
+			var saveGameHeader = findChild((ParentNode)rootNode, "SAVE_GAME_HEADER");
+			string playerFaction = ((StringNode)saveGameHeader.Values[0]).Value;
+			uint turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
+			var dateNode = findChild(saveGameHeader, "DATE");
+			gameYear = ((OptimizedUIntNode)dateNode.Values[0]).Value;
+			gameMonth = ((OptimizedUIntNode)dateNode.Values[2]).Value; // 0-based
+			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)gameMonth + 1);
+			uint display_year = gameYear - 752; // hack guess
+
+			report.AppendFormat("Save file: {0}\n    Turn {1}, {2} {3}\n    Player faction: {4}\n",
+				savefile, turn, display_year, monthName, playerFaction);
 		}
 
 		const string FactionArrayTitle = "FACTION_ARRAY - ";
@@ -817,6 +854,80 @@ namespace EsfControl
 			}
 #endif // NOT_READY
 			return familyTree;
+		}
+
+		static public void VerificationReport(EsfNode rootNode, ParentNode regionArrayNode)
+		{
+			GetAllFactions(GetFactionArrayNode(rootNode));
+
+			List<ParentNode> regions = new List<ParentNode>();
+			foreach (var arrayNode in regionArrayNode.Children)
+			{
+				regions.Add(arrayNode.Children[0]);
+			}
+
+			ShowRegionsReport(rootNode, regions.ToArray());
+		}
+
+		static private void ShowRegionsReport(EsfNode rootNode, ParentNode[] regionNodes)
+		{
+			StringBuilder report = new StringBuilder();
+			uint gameYear, gameMonth;
+			reportHeader(rootNode, report, out gameYear, out gameMonth);
+			report.AppendLine();
+
+			int errors = 0;
+			string[] buildingNodeHierarchy =
+			{
+				"REGION_SLOT_MANAGER",
+				"REGION_SLOT_ARRAY",
+				"REGION_SLOT_ARRAY - 0",
+				"REGION_SLOT",
+				"REGION_BUILDING_MANAGER",
+			};
+			string[] garrisonResidenceHierarchy =
+			{
+				"SETTLEMENT",
+				"GARRISON_RESIDENCE",
+			};
+
+			foreach (var region in regionNodes)
+			{
+				string name = ((StringNode)region.Values[1]).Value;
+				uint wealth = ((OptimizedUIntNode)region.Values[3]).Value;
+				bool desolate = (wealth == 0);
+
+				if (! desolate)
+				{ 
+					var slot0_BuildingManager = WalkChildren(region, buildingNodeHierarchy);
+					if (slot0_BuildingManager.Children.Count == 0)
+					{
+						report.AppendFormat("{0} has no settlement building\n", name);
+						errors++;
+					}
+					else
+					{
+						var garrisonResidence = WalkChildren(region, garrisonResidenceHierarchy);
+						uint armyId = ((OptimizedUIntNode)garrisonResidence.Values[6]).Value;
+						if (armyId == 0)
+						{
+							report.AppendFormat("{0} has no garrison\n", name);
+							errors++;
+						}
+
+						// TODO: wounded garrison
+					}
+				}
+			}
+
+			if (errors == 0)
+				report.AppendLine("No verification errors found");
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 
 		// hack! from
