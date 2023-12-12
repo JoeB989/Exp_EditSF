@@ -24,6 +24,7 @@ New Reports main menu - this is where all reporting features will move to
   - no empty building slots
   - all settlement buildings have a garrison
   - wounded garrisons
+- Fix Character skills - fixes the TDD problem where horizontal skills get saved in reverse order and don't load properly.  Only operates on player faction for now.
 
 New menu commands on the Faction Array node (FACTION_ARRAY)
 - All Factions Economcs - gives an economics report of all factions

@@ -45,12 +45,14 @@
 			this.playerFactionReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.allFactionsEconomicsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.allFactionsCharactersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+			this.verifySettlementsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.statusBar = new System.Windows.Forms.StatusStrip();
 			this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
 			this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
 			this.editEsfComponent = new EsfControl.EditEsfComponent();
-			this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
-			this.verifySettlementsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+			this.fixCharacterSkillsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.statusBar.SuspendLayout();
 			this.SuspendLayout();
@@ -125,21 +127,21 @@
 			// 
 			this.addBookmarkToolStripMenuItem.Enabled = false;
 			this.addBookmarkToolStripMenuItem.Name = "addBookmarkToolStripMenuItem";
-			this.addBookmarkToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.addBookmarkToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
 			this.addBookmarkToolStripMenuItem.Text = "Add Bookmark";
 			this.addBookmarkToolStripMenuItem.Click += new System.EventHandler(this.AddBookmark);
 			// 
 			// editBookmarkToolStripMenuItem
 			// 
 			this.editBookmarkToolStripMenuItem.Name = "editBookmarkToolStripMenuItem";
-			this.editBookmarkToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.editBookmarkToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
 			this.editBookmarkToolStripMenuItem.Text = "Edit Bookmarks";
 			this.editBookmarkToolStripMenuItem.Click += new System.EventHandler(this.EditBookmarks);
 			// 
 			// bookmarkSeparator
 			// 
 			this.bookmarkSeparator.Name = "bookmarkSeparator";
-			this.bookmarkSeparator.Size = new System.Drawing.Size(177, 6);
+			this.bookmarkSeparator.Size = new System.Drawing.Size(153, 6);
 			// 
 			// optionsToolStripMenuItem
 			// 
@@ -179,14 +181,14 @@
 			// runSingleTestToolStripMenuItem
 			// 
 			this.runSingleTestToolStripMenuItem.Name = "runSingleTestToolStripMenuItem";
-			this.runSingleTestToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.runSingleTestToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
 			this.runSingleTestToolStripMenuItem.Text = "Run Load/Save Test";
 			this.runSingleTestToolStripMenuItem.Click += new System.EventHandler(this.runSingleTestToolStripMenuItem_Click);
 			// 
 			// runTestsStripMenuItem
 			// 
 			this.runTestsStripMenuItem.Name = "runTestsStripMenuItem";
-			this.runTestsStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.runTestsStripMenuItem.Size = new System.Drawing.Size(176, 22);
 			this.runTestsStripMenuItem.Text = "Multiple Tests";
 			this.runTestsStripMenuItem.Click += new System.EventHandler(this.runTestsToolStripMenuItem_Click);
 			// 
@@ -213,7 +215,9 @@
             this.allFactionsEconomicsToolStripMenuItem,
             this.allFactionsCharactersToolStripMenuItem,
             this.toolStripMenuItem1,
-            this.verifySettlementsToolStripMenuItem});
+            this.verifySettlementsToolStripMenuItem,
+            this.toolStripMenuItem2,
+            this.fixCharacterSkillsToolStripMenuItem});
 			this.reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
 			this.reportsToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
 			this.reportsToolStripMenuItem.Text = "Reports";
@@ -239,6 +243,18 @@
 			this.allFactionsCharactersToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
 			this.allFactionsCharactersToolStripMenuItem.Text = "All Factions Characters";
 			this.allFactionsCharactersToolStripMenuItem.Click += new System.EventHandler(this.allFactionsCharactersToolStripMenuItem_Click);
+			// 
+			// toolStripMenuItem1
+			// 
+			this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+			this.toolStripMenuItem1.Size = new System.Drawing.Size(193, 6);
+			// 
+			// verifySettlementsToolStripMenuItem
+			// 
+			this.verifySettlementsToolStripMenuItem.Name = "verifySettlementsToolStripMenuItem";
+			this.verifySettlementsToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+			this.verifySettlementsToolStripMenuItem.Text = "Verify Settlements";
+			this.verifySettlementsToolStripMenuItem.Click += new System.EventHandler(this.verifySettlementsToolStripMenuItem_Click);
 			// 
 			// statusBar
 			// 
@@ -271,17 +287,17 @@
 			this.editEsfComponent.Size = new System.Drawing.Size(789, 745);
 			this.editEsfComponent.TabIndex = 3;
 			// 
-			// toolStripMenuItem1
+			// toolStripMenuItem2
 			// 
-			this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-			this.toolStripMenuItem1.Size = new System.Drawing.Size(193, 6);
+			this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+			this.toolStripMenuItem2.Size = new System.Drawing.Size(193, 6);
 			// 
-			// verifySettlementsToolStripMenuItem
+			// fixCharacterSkillsToolStripMenuItem
 			// 
-			this.verifySettlementsToolStripMenuItem.Name = "verifySettlementsToolStripMenuItem";
-			this.verifySettlementsToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
-			this.verifySettlementsToolStripMenuItem.Text = "Verify Settlements";
-			this.verifySettlementsToolStripMenuItem.Click += new System.EventHandler(this.verifySettlementsToolStripMenuItem_Click);
+			this.fixCharacterSkillsToolStripMenuItem.Name = "fixCharacterSkillsToolStripMenuItem";
+			this.fixCharacterSkillsToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
+			this.fixCharacterSkillsToolStripMenuItem.Text = "Fix Character Skills";
+			this.fixCharacterSkillsToolStripMenuItem.Click += new System.EventHandler(this.fixCharacterSkillsToolStripMenuItem_Click);
 			// 
 			// EditSF
 			// 
@@ -333,6 +349,8 @@
 		private System.Windows.Forms.ToolStripMenuItem allFactionsCharactersToolStripMenuItem;
 		private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
 		private System.Windows.Forms.ToolStripMenuItem verifySettlementsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
+		private System.Windows.Forms.ToolStripMenuItem fixCharacterSkillsToolStripMenuItem;
 	}
 }
 

@@ -266,6 +266,11 @@ namespace EditSF {
 		{
 			editEsfComponent.VerificationReport();
 		}
+
+		private void fixCharacterSkillsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			editEsfComponent.FixCharacterSkills();
+		}
 	}
 
 	public class LogFileWriter {

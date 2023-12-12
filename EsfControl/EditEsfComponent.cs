@@ -147,6 +147,11 @@ namespace EsfControl {
         {
 			Helper.VerificationReportFromRoot(RootNode);
 		}
+
+        public void FixCharacterSkills()
+        {
+			Helper.FixCharacterSkills(RootNode);
+		}
 	}
 
     public class MouseHandler
