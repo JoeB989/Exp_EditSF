@@ -39,6 +39,14 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helper.Army.cs" />
+    <Compile Include="Helper.Character.cs" />
+    <Compile Include="Helper.Diplomacy.cs" />
+    <Compile Include="Helper.Economics.cs" />
+    <Compile Include="Helper.Reports.cs" />
+    <Compile Include="Helper.TddData.cs" />
+    <Compile Include="Helper.Verification.cs" />
+    <Compile Include="Helper.FixSkills.cs" />
     <Compile Include="EditEsfComponent.cs">
       <SubType>UserControl</SubType>
     </Compile>

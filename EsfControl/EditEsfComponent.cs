@@ -150,7 +150,7 @@ namespace EsfControl {
 
         public void FixCharacterSkills()
         {
-			Helper.FixCharacterSkills(RootNode);
+			Helper.FixCharacterSkillsFromRoot(RootNode);
 		}
 	}
 
