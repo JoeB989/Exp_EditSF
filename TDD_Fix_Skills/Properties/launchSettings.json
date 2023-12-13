@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TDD_Fix_Skills": {
+      "commandName": "Project",
+      "commandLineArgs": "Attila FixTest.save FixTest_FIXED.save"
+    }
+  }
+}
