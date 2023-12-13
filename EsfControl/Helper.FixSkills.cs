@@ -67,6 +67,11 @@ namespace EsfControl
 			public uint Number;         // 2
 			public ParentNode Node;
 			public int NodeIndex;
+
+			// Value0 is Name
+			public uint Value1;
+			public float Value2;
+			public uint Value3;
 		}
 
 		static private bool fixCharacterSkills(int factionIndex, int characterIndex, ParentNode character, StringBuilder report)
@@ -112,6 +117,9 @@ namespace EsfControl
 						newSkill.Number = num;
 						newSkill.Node = skillNode;
 						newSkill.NodeIndex = i;
+						newSkill.Value1 = ((OptimizedUIntNode)skillNode.Values[1]).Value;
+						newSkill.Value2 = ((OptimizedFloatNode)skillNode.Values[2]).Value;
+						newSkill.Value3 = ((OptimizedUIntNode)skillNode.Values[3]).Value; 
 						found.SkillNodes.Add(newSkill);
 					}
 				}
@@ -157,6 +165,7 @@ namespace EsfControl
 
 					if (needsFixing)
 					{
+#if OLD
 						// Remove and reinsert these skills in the right order
 						// Algorithm is similar to EditEsfComponent::MoveNode but for multiple nodes
 						int insertAt = skillSet.SkillNodes[0].NodeIndex;
@@ -168,6 +177,20 @@ namespace EsfControl
 							nodes.Insert(insertAt++, skill.Node);
 						}
 						parent.Value = nodes;
+#else
+						// TEST: try just rewriting the 4 values instead of replacing a reordered array
+						int insertAt = skillSet.SkillNodes[0].NodeIndex;
+						for (int i = 0; i < ordered.Count(); i++)
+						{
+							var oldNode = skillSet.SkillNodes[i].Node;
+							var newSkill = ordered.ElementAt(i);
+							((StringNode)oldNode.Values[0]).Value = newSkill.Name;
+							((OptimizedUIntNode)oldNode.Values[1]).Value = newSkill.Value1;
+							((OptimizedFloatNode)oldNode.Values[2]).Value = newSkill.Value2;
+							((OptimizedUIntNode)oldNode.Values[3]).Value = newSkill.Value3;
+
+						}
+#endif
 					}
 				}
 			}
