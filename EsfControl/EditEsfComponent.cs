@@ -7,6 +7,7 @@ using EsfLibrary;
 using CommonDialogs;
 using System.Text;
 using System.Linq;
+using EsfHelper;
 
 namespace EsfControl {
     public partial class EditEsfComponent : UserControl {
@@ -130,27 +131,62 @@ namespace EsfControl {
 
 		public void PlayerFactionReport()
 		{
-            Helper.OneFactionReportFromRoot(RootNode, 0);
+            StringBuilder report = new StringBuilder();
+			Helper.OneFactionReportFromRoot(RootNode, 0, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 
 		public void AllFactionEconomicsReport()
 		{
-            Helper.AllFactionEconomicsReportFromRoot(RootNode);
+			StringBuilder report = new StringBuilder();
+			Helper.AllFactionEconomicsReportFromRoot(RootNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 
 		public void AllFactionCharactersReport()
 		{
-            Helper.AllFactionCharactersReportFromRoot(RootNode);
+			StringBuilder report = new StringBuilder();
+			Helper.AllFactionCharactersReportFromRoot(RootNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 
-        public void VerificationReport()
+		public void VerificationReport()
         {
-			Helper.VerificationReportFromRoot(RootNode);
+			StringBuilder report = new StringBuilder();
+			Helper.VerificationReportFromRoot(RootNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 
-        public void FixCharacterSkills()
+		public void FixCharacterSkills()
         {
-			Helper.FixCharacterSkillsFromRoot(RootNode);
+			StringBuilder report = new StringBuilder();
+			Helper.FixCharacterSkillsFromRoot(RootNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
 		}
 	}
 
@@ -176,7 +212,7 @@ namespace EsfControl {
 
                     if (node.Text.StartsWith("FACTION_ARRAY"))
                     {
-                        var item = CreateMenuItem("Faction Report ...", selectedNode, Helper.OneFactionReport);
+                        var item = CreateMenuItem("Faction Report ...", selectedNode, OneFactionReport);
                         contextMenu.Items.Add(item);
                     }
 
@@ -190,9 +226,9 @@ namespace EsfControl {
                 else if ((selectedNode != null) && (node.Text == "FACTION_ARRAY"))
                 {
                     treeView.SelectedNode = node;
-                    var item = CreateMenuItem("All Factions Economics ...", selectedNode, Helper.AllFactionEconomicsReport);
+                    var item = CreateMenuItem("All Factions Economics ...", selectedNode, AllFactionEconomicsReport);
                     contextMenu.Items.Add(item);
-					item = CreateMenuItem("All Factions Characters ...", selectedNode, Helper.AllFactionCharactersReport);
+					item = CreateMenuItem("All Factions Characters ...", selectedNode, AllFactionCharactersReport);
 					contextMenu.Items.Add(item);
 				}
 
@@ -300,6 +336,42 @@ namespace EsfControl {
                 }
             }
         }
+
+		private void OneFactionReport(EsfNode factionEntryNode)
+        {
+			StringBuilder report = new StringBuilder();
+			Helper.OneFactionReport(factionEntryNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
+		}
+
+		private void AllFactionEconomicsReport(EsfNode factionArrayNode)
+		{
+			StringBuilder report = new StringBuilder();
+			Helper.AllFactionEconomicsReport(factionArrayNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
+		}
+
+		private void AllFactionCharactersReport(EsfNode factionArrayNode)
+		{
+			StringBuilder report = new StringBuilder();
+			Helper.AllFactionCharactersReport(factionArrayNode, report);
+
+			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.OK)
+			{
+				Clipboard.SetText(report.ToString());
+			}
+		}
 	}
 
 	public class EsfTreeNode : TreeNode {

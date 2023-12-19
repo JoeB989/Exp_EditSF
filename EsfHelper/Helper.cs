@@ -1,58 +1,62 @@
 ﻿using EsfLibrary;
+using System.Text;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
-		//
-		//  Entry points
-		//
-#if REMOVE
-		static public void AllFactionEconomicsReportFromRoot(EsfNode rootNode)
+		/// <summary>
+		/// Set the save file name you want listed in report headers
+		/// </summary>
+		static public string SaveFileName { get; set; }
+
+		static public void AllFactionEconomicsReportFromRoot(EsfNode rootNode, StringBuilder report)
 		{
 			if (rootNode == null)
 				return;
-			AllFactionEconomicsReport(GetFactionArrayNode(rootNode));
+			AllFactionEconomicsReport(GetFactionArrayNode(rootNode), report);
 		}
 
-		static public void AllFactionCharactersReportFromRoot(EsfNode rootNode)
+		static public void AllFactionCharactersReportFromRoot(EsfNode rootNode, StringBuilder report)
 		{
 			if (rootNode == null)
 				return;
-			AllFactionCharactersReport(GetFactionArrayNode(rootNode));
+			AllFactionCharactersReport(GetFactionArrayNode(rootNode), report);
 		}
 
-		static public void OneFactionReportFromRoot(EsfNode rootNode, int index)
+		static public void OneFactionReportFromRoot(EsfNode rootNode, int index, StringBuilder report)
 		{
 			if (rootNode == null)
 				return;
 			var factionNode = getFactionNode(rootNode, index);
-			OneFactionReport(factionNode);
+			OneFactionReport(factionNode, report);
 		}
 
-		static public void AllFactionEconomicsReport(EsfNode factionArrayNode)
+		static public void AllFactionEconomicsReport(EsfNode factionArrayNode, StringBuilder report)
 		{
-			AllFactionsReport(factionArrayNode, new ReportConfig() { EconomicReport = true, ShowDiplomacy = true });
+			AllFactionsReport(report, factionArrayNode,
+				new ReportConfig() { EconomicReport = true, ShowDiplomacy = true });
 		}
 
-		static public void AllFactionCharactersReport(EsfNode factionArrayNode)
+		static public void AllFactionCharactersReport(EsfNode factionArrayNode, StringBuilder report)
 		{
-			AllFactionsReport(factionArrayNode, new ReportConfig() { CharacterReport = true });
+			AllFactionsReport(report, factionArrayNode,
+				new ReportConfig() { CharacterReport = true });
 		}
 
-		static public void VerificationReportFromRoot(EsfNode rootNode)
+		static public void VerificationReportFromRoot(EsfNode rootNode, StringBuilder report)
 		{
 			if (rootNode == null)
 				return;
-			VerificationReport(rootNode, GetRegionArrayNode(rootNode));
+			VerificationReport(report, rootNode, GetRegionArrayNode(rootNode));
 		}
-#endif // REMOVE
 
-		static public string FixCharacterSkillsFromRoot(EsfNode rootNode)
+		static public bool FixCharacterSkillsFromRoot(EsfNode rootNode, StringBuilder report)
 		{
 			if (rootNode == null)
-				return null;
-			return FixCharacterSkills(rootNode);
+				return false;
+
+			return FixCharacterSkills(report, rootNode);
 		}
 
 		//
@@ -64,7 +68,7 @@ namespace EsfControl
 		{
 			var factionArray = GetFactionArrayNode(rootNode);
 			string name = string.Format("{0}{1}", FactionArrayTitle, index);
-			return findChild(factionArray, name);
+			return FindChild(factionArray, name);
 		}
 
 		static private ParentNode GetFactionArrayNode(EsfNode rootNode)
@@ -80,7 +84,7 @@ namespace EsfControl
 			return WalkChildren(rootNode, nodeHierarchy);
 		}
 
-		static private ParentNode GetRegionArrayNode(EsfNode rootNode)
+		static public ParentNode GetRegionArrayNode(EsfNode rootNode)
 		{
 			string[] nodeHierarchy =
 			{
@@ -94,15 +98,15 @@ namespace EsfControl
 			return WalkChildren(rootNode, nodeHierarchy);
 		}
 
-		static private ParentNode WalkChildren(EsfNode rootNode, string[] nodeHierarchy)
+		static private ParentNode? WalkChildren(EsfNode rootNode, string[] nodeHierarchy)
 		{
 			ParentNode node = (ParentNode)rootNode;
 			for (int i = 0; (i < nodeHierarchy.Length) && (node != null); i++)
-				node = findChild(node, nodeHierarchy[i]);
+				node = FindChild(node, nodeHierarchy[i]);
 			return node;
 		}
 
-		static private ParentNode findChild(ParentNode node, string childName)
+		static public ParentNode? FindChild(ParentNode node, string childName)
 		{
 			foreach (var child in node.Children)
 			{

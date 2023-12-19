@@ -1,12 +1,9 @@
 ﻿using EsfLibrary;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		/// <summary>
 		/// Fix out-of-order character skills
@@ -24,16 +21,16 @@ namespace EsfControl
 		/// We need to rearrange the order if wrong, but not change it if correct
 		/// </remarks>
 		/// <param name="rootNode"></param>
-		static private void FixCharacterSkills(EsfNode rootNode)
+		/// <returns>true if changes made, false if none needed</returns>
+		static private bool FixCharacterSkills(StringBuilder report, EsfNode rootNode)
 		{
 			// TEMP: For now, only do player faction
 			ParentNode[] factions = new ParentNode[] { getFactionNode(rootNode, 0) };
 
-			StringBuilder report = new StringBuilder();
 			bool any = false;
 			for (int f = 0; f < factions.Length; f++)
 			{
-				var characters = findChild(factions[f].Children[0], "CHARACTER_ARRAY");
+				var characters = FindChild(factions[f].Children[0], "CHARACTER_ARRAY");
 				int charIndex = 0;
 				foreach (var charNode in characters.Children)
 				{
@@ -48,12 +45,7 @@ namespace EsfControl
 
 			if (!any)
 				report.AppendLine("No character skills needed reordering");
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			return any;
 		}
 
 		private class MoveSkill
@@ -82,10 +74,17 @@ namespace EsfControl
 				"CAMPAIGN_SKILLS",
 				"CAMPAIGN_SKILLS_BLOCK",
 			};
+
 			var skillsBlock = WalkChildren(character, skillsHierarchy);
 			bool any = false;
 			if (skillsBlock == null)
 				return any;
+
+			var details = FindChild(character, "CHARACTER_DETAILS");
+			string nameKey = readNameKey(details);
+			string charName;
+			if (!TddHardcodedNames.TryGetValue(nameKey, out charName))
+				charName = nameKey;
 
 			// categorize skills
 			List<MoveSkill> skills = new List<MoveSkill>();
@@ -119,7 +118,7 @@ namespace EsfControl
 						newSkill.NodeIndex = i;
 						newSkill.Value1 = ((OptimizedUIntNode)skillNode.Values[1]).Value;
 						newSkill.Value2 = ((OptimizedFloatNode)skillNode.Values[2]).Value;
-						newSkill.Value3 = ((OptimizedUIntNode)skillNode.Values[3]).Value; 
+						newSkill.Value3 = ((OptimizedUIntNode)skillNode.Values[3]).Value;
 						found.SkillNodes.Add(newSkill);
 					}
 				}
@@ -147,7 +146,7 @@ namespace EsfControl
 							//		[n]list       [n]list
 							if (!any)
 							{
-								report.AppendFormat("Faction[{0}] Character[{1}] skills out of order:\n", factionIndex, characterIndex);
+								report.AppendFormat("Faction[{0}] Character[{1}] {2} skills out of order:\n", factionIndex, characterIndex, charName);
 								any = true;
 							}
 							string arrow = "==>";

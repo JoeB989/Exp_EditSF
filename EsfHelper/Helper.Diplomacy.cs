@@ -1,11 +1,9 @@
 ﻿using EsfLibrary;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		static private void DiplomacyReport(ParentNode factionNode, StringBuilder report)
 		{
@@ -52,7 +50,7 @@ namespace EsfControl
 			foreach (Faction faction in Factions)
 				faction.Relationship = null;
 
-			var diploManager = findChild(factionNode, "OLD_DIPLOMACY_MANAGER");
+			var diploManager = FindChild(factionNode, "OLD_DIPLOMACY_MANAGER");
 			var relationshipArray = diploManager.Children[0];
 			foreach (var arrayEntry in relationshipArray.Children)
 			{

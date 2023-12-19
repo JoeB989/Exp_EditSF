@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		/// <summary>
 		/// hack! from

@@ -1,82 +1,35 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{AD415480-8879-4271-B8A6-CB7391DEA78C}</ProjectGuid>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>EsfControl</RootNamespace>
-    <AssemblyName>EsfControl</AssemblyName>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <AssemblyTitle>EsfControl</AssemblyTitle>
+    <Product>EsfControl</Product>
+    <Copyright>Copyright ©  2012</Copyright>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
+    <Compile Remove="Helper.Army.cs" />
+    <Compile Remove="Helper.Character.cs" />
+    <Compile Remove="Helper.cs" />
+    <Compile Remove="Helper.Diplomacy.cs" />
+    <Compile Remove="Helper.Economics.cs" />
+    <Compile Remove="Helper.FixSkills.cs" />
+    <Compile Remove="Helper.Reports.cs" />
+    <Compile Remove="Helper.TddData.cs" />
+    <Compile Remove="Helper.Verification.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Helper.Army.cs" />
-    <Compile Include="Helper.Character.cs" />
-    <Compile Include="Helper.Diplomacy.cs" />
-    <Compile Include="Helper.Economics.cs" />
-    <Compile Include="Helper.Reports.cs" />
-    <Compile Include="Helper.TddData.cs" />
-    <Compile Include="Helper.Verification.cs" />
-    <Compile Include="Helper.FixSkills.cs" />
-    <Compile Include="EditEsfComponent.cs">
+    <Compile Update="EditEsfComponent.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="EditEsfComponent.Designer.cs">
-      <DependentUpon>EditEsfComponent.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Helper.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="EditEsfComponent.resx">
-      <DependentUpon>EditEsfComponent.cs</DependentUpon>
-    </EmbeddedResource>
+    <ProjectReference Include="..\EsfHelper\EsfHelper.csproj" />
+    <ProjectReference Include="..\EsfLibrary\EsfLibrary.csproj" />
+    <ProjectReference Include="..\CommonDialogs\CommonDialogs.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\EsfLibrary\EsfLibrary.csproj">
-      <Project>{A290E27B-4B04-4851-A17D-D0F6AEE533A2}</Project>
-      <Name>EsfLibrary</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CommonDialogs\CommonDialogs.csproj">
-      <Project>{1B2FA4F4-C320-496F-9365-636D9180BE03}</Project>
-      <Name>CommonDialogs</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

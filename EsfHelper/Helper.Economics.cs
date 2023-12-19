@@ -1,15 +1,13 @@
 ﻿using EsfLibrary;
-using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		static private void EconomicReport(ParentNode factionNode, StringBuilder report)
 		{
-			var economics = findChild(factionNode, "FACTION_ECONOMICS");
+			var economics = FindChild(factionNode, "FACTION_ECONOMICS");
 			int treasury = ((OptimizedIntNode)economics.Values[0]).Value;
 			report.AppendLine("  Economics:");
 			report.AppendFormat("    Treasury: {0:#,#}\n", treasury);

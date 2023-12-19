@@ -1,11 +1,14 @@
-﻿using EsfControl;
+﻿using EsfHelper;
 using EsfLibrary;
-using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 namespace TDD_Fix_Skills
 {
+	/// <summary>
+	/// OBSOLETE - functionality moved to TDD_FixSave
+	/// </summary>
 	internal class Program
 	{
 		static void Main(string[] args)
@@ -28,7 +31,8 @@ namespace TDD_Fix_Skills
 			TimeSpan time_to_load = timer.Elapsed;
 
 			timer.Restart();
-			string report = Helper.FixCharacterSkillsFromRoot(file.RootNode);
+			StringBuilder report = new StringBuilder();
+			Helper.FixCharacterSkillsFromRoot(file.RootNode, report);
 			TimeSpan time_to_modify = timer.Elapsed;
 
 			timer.Restart();
@@ -39,14 +43,14 @@ namespace TDD_Fix_Skills
 			if (assemblyConfigurationAttribute != null)
 				Console.WriteLine("{0} build", assemblyConfigurationAttribute.Configuration.ToUpper());
 
-//#if DEBUG
+#if DEBUG
+			Console.WriteLine(report.ToString());
+#endif
+
 			Console.WriteLine("Time to load: {0}\nTime to modify: {1}\nTime to save file: {2}",
 				time_to_load.ToString(),
 				time_to_modify.ToString(),
 				time_to_write.ToString());
-
-			Console.WriteLine(report);
-//#endif
 		}
 	}
 }

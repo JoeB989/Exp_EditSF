@@ -1,16 +1,11 @@
 ﻿using EsfLibrary;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
-		static private void VerificationReport(EsfNode rootNode, ParentNode regionArrayNode)
+		static private void VerificationReport(StringBuilder report, EsfNode rootNode, ParentNode regionArrayNode)
 		{
 			GetAllFactions(GetFactionArrayNode(rootNode));
 
@@ -20,12 +15,11 @@ namespace EsfControl
 				regions.Add(arrayNode.Children[0]);
 			}
 
-			ShowRegionVerificationReport(rootNode, regions.ToArray());
+			ShowRegionVerificationReport(report, rootNode, regions.ToArray());
 		}
 
-		static private void ShowRegionVerificationReport(EsfNode rootNode, ParentNode[] regionNodes)
+		static private void ShowRegionVerificationReport(StringBuilder report, EsfNode rootNode, ParentNode[] regionNodes)
 		{
-			StringBuilder report = new StringBuilder();
 			uint gameYear, gameMonth;
 			reportHeader(rootNode, report, out gameYear, out gameMonth);
 			report.AppendLine();
@@ -76,12 +70,6 @@ namespace EsfControl
 
 			if (errors == 0)
 				report.AppendLine("No verification errors found");
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
 		}
 	}
 }

@@ -1,10 +1,9 @@
 ﻿using EsfLibrary;
-using System.Collections.Generic;
 using System.Text;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		static private void ArmyReport(ParentNode factionNode, StringBuilder report, ReportConfig cfg)
 		{
@@ -12,19 +11,19 @@ namespace EsfControl
 			if (cfg.OmitGarrisons)
 				report.Append("garrisons omitted, ");
 			report.AppendLine("player-named in quotes)");
-			var armies = findChild(factionNode, "ARMY_ARRAY");
+			var armies = FindChild(factionNode, "ARMY_ARRAY");
 			int armyIndex = 0;
 			foreach (var armyNode in armies.Children)
 			{
-				var militaryForce = findChild(armyNode, "MILITARY_FORCE");
-				var militaryForceLegacy = findChild(militaryForce, "MILITARY_FORCE_LEGACY");
+				var militaryForce = FindChild(armyNode, "MILITARY_FORCE");
+				var militaryForceLegacy = FindChild(militaryForce, "MILITARY_FORCE_LEGACY");
 				reportArmy(militaryForceLegacy, armyIndex, report, cfg.OmitGarrisons);
 				armyIndex++;
 			}
 
 			report.AppendLine("  Legacy armies");
-			var legacyPool = findChild(factionNode, "MILITARY_FORCE_LEGACY_POOL");
-			var legacies = findChild(legacyPool, "LEGACIES");
+			var legacyPool = FindChild(factionNode, "MILITARY_FORCE_LEGACY_POOL");
+			var legacies = FindChild(legacyPool, "LEGACIES");
 			armyIndex = 0;
 			foreach (var legacyNode in legacies.Children)
 			{
@@ -42,7 +41,7 @@ namespace EsfControl
 			if (isGarrison && omitGarrisons)
 				return;
 
-			var campaignSkills = findChild(militaryForceLegacy, "CAMPAIGN_SKILLS");
+			var campaignSkills = FindChild(militaryForceLegacy, "CAMPAIGN_SKILLS");
 			uint rank = ((OptimizedUIntNode)campaignSkills.Values[5]).Value + 1;    // 0-based
 			uint experience = ((OptimizedUIntNode)campaignSkills.Values[6]).Value;
 
@@ -50,7 +49,7 @@ namespace EsfControl
 
 			// skills
 			//report.AppendLine("    skills:");
-			var skillsBlock = findChild(campaignSkills, "CAMPAIGN_SKILLS_BLOCK");
+			var skillsBlock = FindChild(campaignSkills, "CAMPAIGN_SKILLS_BLOCK");
 			foreach (ParentNode skill in skillsBlock.Children)
 			{
 				string name = ((StringNode)skill.Values[0]).Value;
@@ -60,7 +59,7 @@ namespace EsfControl
 
 			// units - sibling of military force legacy, may not be present (for legacy armies)
 			ParentNode parent = (ParentNode)militaryForceLegacy.Parent;
-			var unitContainer = findChild(parent, "UNIT_CONTAINER");
+			var unitContainer = FindChild(parent, "UNIT_CONTAINER");
 			if (unitContainer != null)
 			{
 				var unitsArray = unitContainer.Children[0];
@@ -70,7 +69,7 @@ namespace EsfControl
 					foreach (var unitEntry in unitsArray.Children)
 					{
 						var unit = unitEntry.Children[0];
-						var unitRecordKey = findChild(unit, "UNIT_RECORD_KEY");
+						var unitRecordKey = FindChild(unit, "UNIT_RECORD_KEY");
 						var unitType = ((StringNode)unitRecordKey.Values[0]).Value;
 
 						if (units.ContainsKey(unitType))
@@ -88,10 +87,10 @@ namespace EsfControl
 			}
 
 			// siege equipment if present
-			var siege = findChild(parent, "SIEGE");
+			var siege = FindChild(parent, "SIEGE");
 			if (siege != null)
 			{
-				var siegeMgr = findChild(siege, "SIEGE_EQUIPMENT_BUILD_MANAGER");
+				var siegeMgr = FindChild(siege, "SIEGE_EQUIPMENT_BUILD_MANAGER");
 				var builtArray = ((EsfArrayNode<string>)(siegeMgr.Values[0])).Value;
 
 				Dictionary<string, int> siegeEquipment = new Dictionary<string, int>();
@@ -107,7 +106,7 @@ namespace EsfControl
 				reportUnits(siegeEquipment, report);
 
 				// siege build queue
-				var buildQueue = findChild(siegeMgr, "SIEGE_ITEM_ARRAY");
+				var buildQueue = FindChild(siegeMgr, "SIEGE_ITEM_ARRAY");
 				if (buildQueue != null)
 				{
 					report.Append("      siege build queue:");
@@ -148,7 +147,7 @@ namespace EsfControl
 			const string GarrisonName = "random_localisation_strings_string_military_force_legacy_name_garrison_army";
 			const string LegioHeader = "region_groups_localised_name_roman_legacy_generic_";
 
-			var localization = findChild(militaryForceLegacy, "CAMPAIGN_LOCALISATION");
+			var localization = FindChild(militaryForceLegacy, "CAMPAIGN_LOCALISATION");
 			name = ((StringNode)localization.Values[0]).Value;
 			bool mrGarrison = false;
 			if (name == GarrisonName)

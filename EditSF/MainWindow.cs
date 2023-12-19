@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using EsfControl;
 using EsfLibrary;
+using System.Reflection;
 
 namespace EditSF {
     public partial class EditSF : Form {
@@ -22,7 +23,7 @@ namespace EditSF {
                 return filename;
             }
             set {
-                Text = string.Format("{0} - EditSF {1}", Path.GetFileName(value), Application.ProductVersion);
+                Text = string.Format("{0} - EditSF {1}", Path.GetFileName(value), Version);
                 statusLabel.Text = value;
                 filename = value;
             }
@@ -43,12 +44,15 @@ namespace EditSF {
         }
         #endregion
 
+        public string Version { get; set; }
+
         public EditSF() {
             InitializeComponent();
 
             updater = new ProgressUpdater(progressBar);
 
-            Text = string.Format("EditSF {0}", Application.ProductVersion);
+            Version = Application.ProductVersion;
+			Text = string.Format("EditSF {0}", Version);
             
             editEsfComponent.NodeSelected += NodeSelected;
             
@@ -94,7 +98,7 @@ namespace EditSF {
                     //codec.NodeReadFinished -= logger.WriteEntry;
                     //codec.Log -= logger.WriteLogEntry;
                 }
-                Text = string.Format("{0} - EditSF {1}", Path.GetFileName(openFilename), Application.ProductVersion);
+                Text = string.Format("{0} - EditSF {1}", Path.GetFileName(openFilename), Version);
                 
                 foreach(ToolStripItem item in bookmarksToolStripMenuItem.DropDownItems) {
                     if (item is BookmarkItem) {
@@ -226,7 +230,7 @@ namespace EditSF {
             }
         }
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e) {
-            MessageBox.Show(String.Format("EditSF {0}\nCreated by daniu", Application.ProductVersion), "About EditSF");
+            MessageBox.Show(String.Format("EditSF {0}\nCreated by daniu", Version), "About EditSF");
         }
         #endregion
 

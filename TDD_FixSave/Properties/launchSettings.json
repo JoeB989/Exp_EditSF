@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TDD_FixSave": {
+      "commandName": "Project",
+      "commandLineArgs": "rom_reg_anorien_minas_tirith,0,5;rom_reg_westfold_hornburg,0,1;rom_reg_gap_of_rohan_isengard,0,5"
+    }
+  }
+}

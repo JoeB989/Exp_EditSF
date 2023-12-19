@@ -1,18 +1,15 @@
 ﻿using EsfLibrary;
-using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Windows.Forms;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
-		static private void AllFactionsReport(EsfNode factionArrayNode, ReportConfig cfg)
+		static private void AllFactionsReport(StringBuilder report, EsfNode factionArrayNode, ReportConfig cfg)
 		{
 			GetAllFactions(factionArrayNode);
 			ParentNode worldNode = (ParentNode)factionArrayNode.Parent;
-			ParentNode FamilyTreeNode = findChild(worldNode, "FAMILY_TREE");
+			ParentNode FamilyTreeNode = FindChild(worldNode, "FAMILY_TREE");
 			List<FamilyMember> familyTree = ScanFamilyTree(FamilyTreeNode);
 
 			List<ParentNode> factions = new List<ParentNode>();
@@ -21,14 +18,14 @@ namespace EsfControl
 				ParentNode factionNode = factionEntryNode.Children[0];
 				factions.Add(factionNode);
 			}
-			ShowFactionsReport(factions.ToArray(), familyTree, cfg);
+			ShowFactionsReport(report, factions.ToArray(), familyTree, cfg);
 		}
 
-		static public void OneFactionReport(EsfNode factionEntryNode)
+		static public void OneFactionReport(EsfNode factionEntryNode, StringBuilder report)
 		{
 			GetAllFactions(factionEntryNode.Parent);
 			ParentNode worldNode = (ParentNode)factionEntryNode.Parent.Parent;
-			ParentNode FamilyTreeNode = findChild(worldNode, "FAMILY_TREE");
+			ParentNode FamilyTreeNode = FindChild(worldNode, "FAMILY_TREE");
 			List<FamilyMember> familyTree = ScanFamilyTree(FamilyTreeNode);
 
 			ParentNode factionNode = ((ParentNode)factionEntryNode).Children[0];
@@ -41,7 +38,7 @@ namespace EsfControl
 				OmitGarrisons = false,//true,
 				ShowDiplomacy = true,
 			};
-			ShowFactionsReport(nodes, familyTree, cfg);
+			ShowFactionsReport(report, nodes, familyTree, cfg);
 		}
 
 		private struct ReportConfig
@@ -53,14 +50,13 @@ namespace EsfControl
 			public bool ShowDiplomacy;
 		}
 
-		static private void ShowFactionsReport(ParentNode[] nodes, List<FamilyMember> familyTree, ReportConfig cfg)
+		static private void ShowFactionsReport(StringBuilder report, ParentNode[] nodes, List<FamilyMember> familyTree, ReportConfig cfg)
 		{
 			// hack to find the root node
 			EsfNode rootNode = nodes[0];
 			while (rootNode.Parent != null)
 				rootNode = rootNode.Parent;
 
-			StringBuilder report = new StringBuilder();
 			uint gameYear, gameMonth;
 			reportHeader(rootNode, report, out gameYear, out gameMonth);
 
@@ -68,31 +64,21 @@ namespace EsfControl
 			{
 				buildFactionReport(factionNode, report, gameYear, gameMonth, familyTree, cfg);
 			}
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
 		}
 
 		static private void reportHeader(EsfNode rootNode, StringBuilder report, out uint gameYear, out uint gameMonth)
 		{
-			string title = Application.OpenForms[0].Text; // hack
-			int dotsave = title.IndexOf(".save", StringComparison.OrdinalIgnoreCase);
-			string savefile = (dotsave > 0) ? title.Substring(0, dotsave + 5) : title;
-
-			var saveGameHeader = findChild((ParentNode)rootNode, "SAVE_GAME_HEADER");
+			var saveGameHeader = FindChild((ParentNode)rootNode, "SAVE_GAME_HEADER");
 			string playerFaction = ((StringNode)saveGameHeader.Values[0]).Value;
 			uint turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
-			var dateNode = findChild(saveGameHeader, "DATE");
+			var dateNode = FindChild(saveGameHeader, "DATE");
 			gameYear = ((OptimizedUIntNode)dateNode.Values[0]).Value;
 			gameMonth = ((OptimizedUIntNode)dateNode.Values[2]).Value; // 0-based
 			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)gameMonth + 1);
 			uint display_year = gameYear - 752; // hack guess
 
 			report.AppendFormat("Save file: {0}\n    Turn {1}, {2} {3}\n    Player faction: {4}\n",
-				savefile, turn, display_year, monthName, playerFaction);
+				SaveFileName, turn, display_year, monthName, playerFaction);
 		}
 
 		static private void buildFactionReport(ParentNode factionNode, StringBuilder report,

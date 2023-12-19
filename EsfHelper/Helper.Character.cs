@@ -1,11 +1,9 @@
 ﻿using EsfLibrary;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace EsfControl
+namespace EsfHelper
 {
-	static internal partial class Helper
+	static public partial class Helper
 	{
 		static private void CharacterReport(ParentNode factionNode, StringBuilder report,
 			uint game_year, uint game_month, List<FamilyMember> familyTree)
@@ -13,7 +11,7 @@ namespace EsfControl
 			// find governors (all provinces and factions)
 			Dictionary<uint, string> governors = new Dictionary<uint, string>();
 			var worldNode = factionNode.Parent.Parent.Parent; // hack
-			var provinceManager = findChild((ParentNode)worldNode, "PROVINCE_MANAGER");
+			var provinceManager = FindChild((ParentNode)worldNode, "PROVINCE_MANAGER");
 			var provinceArray = provinceManager.Children[0];
 			foreach (var province in provinceArray.Children)
 			{
@@ -29,7 +27,7 @@ namespace EsfControl
 			}
 
 			// find characters that have an office
-			var government = findChild(factionNode, "GOVERNMENT");
+			var government = FindChild(factionNode, "GOVERNMENT");
 			var postsNode = government.Children[0];
 			Dictionary<uint, string> officers = new Dictionary<uint, string>();
 			foreach (var posts in postsNode.Children)
@@ -50,7 +48,7 @@ namespace EsfControl
 								select member;
 
 			report.AppendLine("  Characters");
-			var characters = findChild(factionNode, "CHARACTER_ARRAY");
+			var characters = FindChild(factionNode, "CHARACTER_ARRAY");
 			int charIndex = 0;
 			foreach (var charNode in characters.Children)
 			{
@@ -62,7 +60,7 @@ namespace EsfControl
 
 			// candidates from CHARACTER_RECRUITMENT_POOL
 			report.AppendLine("  Candidates");
-			var recruitmentPool = findChild(factionNode, "CHARACTER_RECRUITMENT_POOL_MANAGER");
+			var recruitmentPool = FindChild(factionNode, "CHARACTER_RECRUITMENT_POOL_MANAGER");
 			var poolBlock = recruitmentPool.Children[0].Children[0].Children[0].Children[0];
 			charIndex = 0;
 			foreach (var poolEntry in poolBlock.Children)
@@ -89,9 +87,9 @@ namespace EsfControl
 					return;
 			}
 
-			var details = findChild(character, "CHARACTER_DETAILS");
+			var details = FindChild(character, "CHARACTER_DETAILS");
 			uint influence = ((OptimizedUIntNode)details.Values[15]).Value;
-			var traitsNode = findChild(details, "TRAITS");
+			var traitsNode = FindChild(details, "TRAITS");
 			var traitNode = traitsNode.Children[0];
 
 			//uint NOT_sex_enum = ((OptimizedUIntNode)details.Values[4]).Value;
@@ -117,7 +115,7 @@ namespace EsfControl
 			bool booted = boot_year > 0;
 
 			// A booted character has no LOS but is not deceased
-			var lineOfSight = findChild(character, "LINE_OF_SIGHT");
+			var lineOfSight = FindChild(character, "LINE_OF_SIGHT");
 			bool deceased = false;
 			if (lineOfSight != null) // candidates won't have this
 			{
@@ -150,7 +148,7 @@ namespace EsfControl
 			string governorOf = null;
 			governors.TryGetValue(charId, out governorOf);
 
-			var campaignSkills = findChild(details, "CAMPAIGN_SKILLS");
+			var campaignSkills = FindChild(details, "CAMPAIGN_SKILLS");
 			uint rank = 1 + ((OptimizedUIntNode)campaignSkills.Value[5]).Value;
 
 			report.AppendFormat("  [{0}] {1} id:{2} (rank {3} {4})", charIndex, name, charId, rank, politicalParty);
@@ -177,7 +175,7 @@ namespace EsfControl
 
 		static private string readNameKey(ParentNode detailsNode)
 		{
-			var nameNode = findChild(detailsNode, "CHARACTER_NAME");
+			var nameNode = FindChild(detailsNode, "CHARACTER_NAME");
 			var namesBlock = nameNode.Children[0];
 			var block0 = namesBlock.Children[0];
 			var localization0 = block0.Children[0];

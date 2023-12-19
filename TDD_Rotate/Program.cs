@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 namespace TDD_Rotate
 {
 	/// <summary>
+	/// OBSOLETE - functionality moved to TDD_FixSave
+	/// 
 	/// The Dawnless Days Building Rotator
 	/// An app to edit a save file and adjust the rotation of specific buildings' visual models.
 	/// Usage:
