@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using EsfControl;
 using EsfLibrary;
 using System.Reflection;
+using EsfHelper;
 
 namespace EditSF {
     public partial class EditSF : Form {
@@ -93,7 +94,8 @@ namespace EditSF {
                 EditedFile = EsfCodecUtil.LoadEsfFile(openFilename);
                 //updater.LoadingFinished();
                 FileName = openFilename;
-                if (logger != null) {
+				Helper.SaveFileName = Path.GetFileName(FileName);
+				if (logger != null) {
                     logger.Close();
                     //codec.NodeReadFinished -= logger.WriteEntry;
                     //codec.Log -= logger.WriteLogEntry;
@@ -120,8 +122,9 @@ namespace EditSF {
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
                 Save(dialog.FileName);
                 FileName = dialog.FileName;
-            }
-        }
+				Helper.SaveFileName = Path.GetFileName(FileName);
+			}
+		}
         
         #region Bookmarks
         private void NodeSelected(EsfNode node) {

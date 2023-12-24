@@ -67,6 +67,11 @@ namespace TDD_FixSave
 
 			if (FindFileToEdit(out saveFile, out backupFile))
 			{
+#if DEBUG
+				Console.WriteLine("  Found {0}\n  Backing up to {1}", saveFile, Path.GetFileName(backupFile));
+#endif
+				Helper.SaveFileName = Path.GetFileName(saveFile);	
+
 				Stopwatch timer = Stopwatch.StartNew();
 				file = OpenAndSaveBackup(saveFile, backupFile);
 				TimeSpan time_to_backup = timer.Elapsed;
@@ -122,6 +127,7 @@ namespace TDD_FixSave
 			// too hardcoded?
 			TimeSpan delayTime = new TimeSpan(0, 0, 10);
 			TimeSpan maxAge = new TimeSpan(0, 0, 30);
+			//TimeSpan maxAge = new TimeSpan(9999, 0, 0, 30);   // TEMP: for testing, always get latest no matter how old
 #if DEBUG
 			Console.WriteLine("Waiting {0} for {1} to finish saving...", delayTime.ToString(), game);
 #endif
@@ -145,7 +151,8 @@ namespace TDD_FixSave
 			}
 			else
 			{
-				Console.WriteLine("No recent save-games found in\n  {0}\n  {1}", saveGamePath, battleSavePath);
+				Console.WriteLine("No recent save-games found in last {0}\n  {1}\n  {2}",
+					maxAge.ToString(), saveGamePath, battleSavePath);
 			}
 			return found;
 		}
