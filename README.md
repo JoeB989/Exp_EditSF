@@ -6,6 +6,7 @@ Originally copied from [EditSF 1.2.7](https://sourceforge.net/p/packfilemanager/
 ### Contents
 - [EditSF 1.3.0](#EditSF-1.3.0)
 - [CompareSF](#CompareSF)
+- [TDD_TileGen](#TDD_TileGen)
 - [TDD_Rotate](#TDD_Rotate)
 - [How to build](#How-to-build)
 
@@ -66,6 +67,11 @@ TODO:
 	- only differences
 	- full files with differences highlighted, navigate differences buttons
 2. Save a project with multiple file paths, so can re-examine as the game progresses
+
+## TDD_TileGen
+Generates content for tile_upgrades.xml from a tile-definition xml file.
+
+Details TBD
 
 ## TDD_Rotate
 A work in progress utility to rotate unique settlement models on the campaign.

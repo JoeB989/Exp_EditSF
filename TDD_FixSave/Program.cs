@@ -9,7 +9,10 @@ namespace TDD_FixSave
 	/// The Dawnless Days save file fixer
 	/// 
 	/// Usage:
-	///		TDD_FixSave  [rotation-fix-list]
+	///		TDD_FixSave  [-f]  [rotation-fix-list]
+	///		
+	///	Optional flags:
+	///		-f	force the immediate processing of the latest save file, regardless of how old it is
 	///	
 	/// This app:
 	///	 1. Fixes the ordering of character follower skills and army traditions,
@@ -65,7 +68,29 @@ namespace TDD_FixSave
 			string saveFile, backupFile;
 			StringBuilder report = new StringBuilder();
 
-			if (FindFileToEdit(out saveFile, out backupFile))
+			bool force = false;
+			string fixList = string.Empty;
+
+			if (args.Length >= 1)
+			{
+				if (args[0] == "-f")
+				{
+					force = true;
+#if DEBUG
+					Console.WriteLine("  Forcing immediate processing of latest file");
+#endif
+					if (args.Length >= 2)
+					{
+						fixList = args[1];
+					}
+				}
+				else
+				{
+					fixList = args[0];
+				}
+			}
+
+			if (FindFileToEdit(out saveFile, out backupFile, force))
 			{
 #if DEBUG
 				Console.WriteLine("  Found {0}\n  Backing up to {1}", saveFile, Path.GetFileName(backupFile));
@@ -81,9 +106,8 @@ namespace TDD_FixSave
 				TimeSpan time_to_fix_skills = timer.Elapsed;
 
 				timer.Restart();
-				if (args.Length > 0)
+				if (!string.IsNullOrEmpty(fixList))
 				{
-					string fixList = args[0];
 					changes |= FixRotations(file.RootNode, fixList, report);
 				}
 				TimeSpan time_to_fix_rotations = timer.Elapsed;
@@ -108,7 +132,7 @@ namespace TDD_FixSave
 			}
 		}
 
-		private static bool FindFileToEdit(out string saveFile, out string backupFile)
+		private static bool FindFileToEdit(out string saveFile, out string backupFile, bool force)
 		{
 			// wait for a new save file to appear in Attila save_games or resume folders
 			// criteria
@@ -128,19 +152,28 @@ namespace TDD_FixSave
 			TimeSpan delayTime = new TimeSpan(0, 0, 10);
 			TimeSpan maxAge = new TimeSpan(0, 0, 30);
 			//TimeSpan maxAge = new TimeSpan(9999, 0, 0, 30);   // TEMP: for testing, always get latest no matter how old
+			if (! force)
+			{
 #if DEBUG
-			Console.WriteLine("Waiting {0} for {1} to finish saving...", delayTime.ToString(), game);
+				Console.WriteLine("Waiting {0} for {1} to finish saving...", delayTime.ToString(), game);
 #endif
-			Thread.Sleep(delayTime);	// too brute force?
+				Thread.Sleep(delayTime);    // too brute force?
+			}
 
 			var now = DateTime.Now;
 
 			DirectoryInfo saveDir = new DirectoryInfo(saveGamePath);
 			DirectoryInfo battleDir = new DirectoryInfo(battleSavePath);
 			var files = saveDir.GetFiles("*.save").Union(battleDir.GetFiles("resume"));
-			var latest = (from file in files
-						  where now - file.LastWriteTime <= maxAge
+			var ordered = from file in files
 						  orderby file.LastWriteTime descending
+						  select file;
+			FileInfo latest;
+			if (force)
+				latest = ordered.FirstOrDefault();
+			else
+				latest = (from file in ordered
+						  where now - file.LastWriteTime <= maxAge
 						  select file).FirstOrDefault();
 
 			if (latest != null)
