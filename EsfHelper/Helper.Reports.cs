@@ -77,8 +77,25 @@ namespace EsfHelper
 			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)gameMonth + 1);
 			uint display_year = gameYear - 752; // hack guess
 
-			report.AppendFormat("Save file: {0}\n    Turn {1}, {2} {3}\n    Player faction: {4}\n",
-				SaveFileName, turn, display_year, monthName, playerFaction);
+			var campaignSetup = GetCampaignSetupNode(rootNode);
+			int diff = ((OptimizedIntNode)campaignSetup.Values[14]).Value;
+			string difficulty = difficultyFromInt(diff);
+
+			report.AppendFormat("Save file: {0}\n    Difficulty {1}\n    Turn {2}, {3} {4}\n    Player faction: {5}\n",
+				SaveFileName, difficulty, turn, display_year, monthName, playerFaction);
+		}
+
+		static private string difficultyFromInt(int diff)
+		{
+			switch (diff)
+			{
+				case 1: return "Easy";
+				case 0: return "Normal";
+				case -1: return "Hard";
+				case -2: return "Very Hard";
+				case -3: return "Legendary";
+				default: return "Unknown";
+			}
 		}
 
 		static private void buildFactionReport(ParentNode factionNode, StringBuilder report,

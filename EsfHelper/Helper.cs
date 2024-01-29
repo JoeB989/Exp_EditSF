@@ -98,6 +98,17 @@ namespace EsfHelper
 			return WalkChildren(rootNode, nodeHierarchy);
 		}
 
+		static public ParentNode GetCampaignSetupNode(EsfNode rootNode)
+		{
+			string[] nodeHierarchy =
+			{
+				"COMPRESSED_DATA",
+				"CAMPAIGN_ENV",
+				"CAMPAIGN_SETUP",
+			};
+			return WalkChildren(rootNode, nodeHierarchy);
+		}
+
 		static private ParentNode? WalkChildren(EsfNode rootNode, string[] nodeHierarchy)
 		{
 			ParentNode node = (ParentNode)rootNode;
