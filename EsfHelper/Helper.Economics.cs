@@ -83,12 +83,14 @@ namespace EsfHelper
 			int taxes = array1[0];
 			int slavery = array1[1];
 			int trade = array1[2];
-			int otherIncome = array2[4];
 			int maint = -array5[8];
 			int armyUpkeep = -array5[1];
 			int navyUpkeep = -array5[2]; // TODO: guess, figure out
-			int otherExpense = 0; // TODO: figure out
 			int interest = array1[4];
+			int tributeToOverlord = -array5[7];
+			int tributeFromPuppets = array2[3];
+			int otherIncome = array2[4];
+			int otherExpenses = 0;	// TODO: anything not explicitly called out above
 
 			// Current turn treasury deductions
 			// Don't show these as costs, since already deducted from treasury in-game.  Maybe report separately at some point.
@@ -96,18 +98,19 @@ namespace EsfHelper
 			int agentCosts = 0; // TBD
 			int recruitment = 0; // TBD
 
-			int totalIncome = taxes + slavery + trade + interest + otherIncome;
-			int totalExpense = armyUpkeep + navyUpkeep + maint + otherExpense;
-			report.AppendFormat("      Taxes            {0,10:#,#}   Army Upkeep {1,10:#,#}\n", taxes, armyUpkeep);
-			report.AppendFormat("      Slave population {0,10:#,#}   Navy Upkeep {1,10:#,#}\n", slavery, navyUpkeep);
-			report.AppendFormat("      Trade            {0,10:#,#}   Maintenance {1,10:#,#}\n", trade, maint);
+			int totalIncome = taxes + slavery + trade + interest + tributeFromPuppets + otherIncome;
+			int totalExpense = armyUpkeep + navyUpkeep + maint + tributeToOverlord;
+			report.AppendFormat("      Taxes            {0,10:#,#}     Army Upkeep {1,10:#,#}\n", taxes, armyUpkeep);
+			report.AppendFormat("      Slave population {0,10:#,#}     Navy Upkeep {1,10:#,#}\n", slavery, navyUpkeep);
+			report.AppendFormat("      Trade            {0,10:#,#}     Maintenance {1,10:#,#}\n", trade, maint);
+			report.AppendFormat("      Tribute received {0,10:#,#}     Tribute paid{1,10:#,#}\n", tributeFromPuppets, tributeToOverlord);
 			report.AppendFormat("      Interest         {0,10:#,#}\n", interest);
 #if NO // Don't show construction as a cost, it's already deducted from treasury in-game.  Maybe report separately at some point.
-			report.AppendFormat("                                    Construction     {0,10:#,#}\n", construction);
+			report.AppendFormat("                                      Construction     {0,10:#,#}\n", construction);
 #endif // NO
-			report.AppendFormat("      Other            {0,10:#,#}   Other       {1,10:#,#}\n", otherIncome, otherExpense);
-			report.  AppendLine("                       ----------               ----------");
-			report.AppendFormat("                       {0,10:#,#}               {1,10:#,#}    = {2:#,#} net income\n", totalIncome, totalExpense, totalIncome + totalExpense);
+			report.AppendFormat("      Other            {0,10:#,#}     Other       {1,10:#,#}\n", otherIncome, otherExpenses);
+			report.  AppendLine("                       ----------                 ----------");
+			report.AppendFormat("                       {0,10:#,#}                 {1,10:#,#}    = {2:#,#} net income\n", totalIncome, totalExpense, totalIncome + totalExpense);
 		}
 	}
 }
