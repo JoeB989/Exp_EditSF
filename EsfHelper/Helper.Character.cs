@@ -164,8 +164,22 @@ namespace EsfHelper
 			// TEMP: for debugging
 			//report.AppendFormat("      Debug info: id:{0} {1}\n", charId, nameKey);
 
+			// character_details / agent_attributes(for general or governor)
+			//	cunning(TDD management)[0] "subterfuge"
+			//	zeal(TDD leadership)[1] "zeal"
+			// authority(TDD command)[2] "authority"
+			var attributes = getAgentAttributes(details);
+			int attr;
+
 			// add other stuff to help disambiguate when name is wrong
-			report.AppendFormat("      Age {0}  Influence {1}\n", age, influence);
+			report.AppendFormat("      Age {0}  Influence {1}", age, influence);
+			if (attributes.TryGetValue("authority", out attr))
+				report.AppendFormat("  Authority(Command) {0}", attr);
+			if (attributes.TryGetValue("subterfuge", out attr))
+				report.AppendFormat("  Cunning(Management) {0}", attr);
+			if (attributes.TryGetValue("zeal", out attr))
+				report.AppendFormat("  Zeal(Leadership) {0}", attr);
+			report.AppendLine();
 
 			foreach (RecordEntryNode trait in traitNode.Children)
 			{
@@ -181,6 +195,21 @@ namespace EsfHelper
 			var localization0 = block0.Children[0];
 			string nameKey = ((StringNode)localization0.Value[0]).Value;
 			return nameKey;
+		}
+
+		static private Dictionary<string, int> getAgentAttributes(ParentNode detailsNode)
+		{
+			Dictionary<string, int> attributes = new Dictionary<string, int>();
+
+			var attributesNode = FindChild(detailsNode, "AGENT_ATTRIBUTES");
+			foreach (var attrib in attributesNode.Children)
+			{
+				string name = ((StringNode)attrib.Value[0]).Value;
+				int value = ((OptimizedIntNode)attrib.Value[1]).Value;
+				attributes[name] = value;
+			}
+
+			return attributes;
 		}
 
 		static private int computeAge(uint birth_year, uint birth_month, uint game_year, uint game_month)
