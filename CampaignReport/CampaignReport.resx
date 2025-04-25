@@ -117,10 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
-  <metadata name="statusBar.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>132, 17</value>
-  </metadata>
+  <data name="label3.Text" xml:space="preserve">
+    <value>Scans a series of save-games based on faction (from filename), and produces a turn-by-turn report.
+
+Handles multiple saves up to 1 per turn; if there are multiple saves per turn only the latest will be used.
+The data is currently copied to the clipboard in TSV format for pasting to MS Excel or other spreadsheet app.</value>
+  </data>
 </root>

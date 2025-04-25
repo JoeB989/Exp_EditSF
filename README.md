@@ -68,6 +68,10 @@ TODO:
 	- full files with differences highlighted, navigate differences buttons
 2. Save a project with multiple file paths, so can re-examine as the game progresses
 
+## CampaignReport
+Processes a series of campaign savegames to extra turn-by-turn data that can be pasted into MS Excel.
+Includes an Excel spreadsheet that can display a variety of charts on that data.
+
 ## TDD_TileGen
 Generates content for tile_upgrades.xml from a tile-definition xml file.
 

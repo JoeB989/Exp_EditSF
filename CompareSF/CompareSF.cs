@@ -262,7 +262,8 @@ namespace CompareSFns
 				for (int child = 0; child < childNodeLists.Length; child++)
 				{
 					ParentNode childNode = (ParentNode) childNodeLists[child][0];
-					string childPath = path + "/" + childNode.Name;
+					//string childPath = path + "/" + childNode.Name;
+					string childPath = string.Format("{0}/{1}[{2}]", path, childNode.Name, child);
 
 					CompareNodeAndChildren(childPath, childNodeLists[child]);
 				}

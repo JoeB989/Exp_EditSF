@@ -59,6 +59,13 @@ namespace EsfHelper
 			return FixCharacterSkills(report, rootNode);
 		}
 
+		static public void StrengthRankReportFromRoot(EsfNode rootNode, StringBuilder report)
+		{
+			if (rootNode == null)
+				return;
+			StrengthRankReport(report, rootNode, GetRegionArrayNode(rootNode));
+		}
+
 		//
 		//  Common utility methods
 		//
@@ -71,7 +78,7 @@ namespace EsfHelper
 			return FindChild(factionArray, name);
 		}
 
-		static private ParentNode GetFactionArrayNode(EsfNode rootNode)
+		static public ParentNode GetFactionArrayNode(EsfNode rootNode)
 		{
 			string[] nodeHierarchy =
 			{
@@ -144,6 +151,7 @@ namespace EsfHelper
 			public string Name;
 			public uint Id;
 			public ParentNode FactionArrayNode;
+			public float Strength;	// temporary, used by strength rank report
 
 			// this faction's armies
 			//public List<ParentNode> MilitaryForceLegacyNodes;

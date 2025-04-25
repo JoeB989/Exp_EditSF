@@ -5,49 +5,55 @@ namespace EsfHelper
 {
 	static public partial class Helper
 	{
-		static private void EconomicReport(ParentNode factionNode, StringBuilder report)
+		static private void EconomicReport(ParentNode factionNode, StringBuilder report, GlobalEco globalEco)
 		{
 			var economics = FindChild(factionNode, "FACTION_ECONOMICS");
 			int treasury = ((OptimizedIntNode)economics.Values[0]).Value;
 			report.AppendLine("  Economics:");
 			report.AppendFormat("    Treasury: {0:#,#}\n", treasury);
+			if (globalEco != null)
+			{
+				globalEco.Factions++;
+				globalEco.Treasury += treasury;
+			}
 
 			var history = economics.Children[0];
 			int index = history.Children.Count - 1;
 			if (index >= 0)
 			{
 				var econDataNode = history.Children[index].Children[0];
-				var econData = readEconData(econDataNode);
-				int taxes = econData.arrays[1][0];
-				if (taxes == 0)
-				{
-					report.AppendLine("    Faction has been destroyed");
-					return;
-				}
+				var econData = readRawEconData(econDataNode);
+				// Disabled because (vanilla) horde factions have 0 tax
+				//int taxes = econData.arrays[1][0];
+				//if (taxes == 0)
+				//{
+				//	report.AppendLine("    Faction has been destroyed");
+				//	return;
+				//}
 
 				report.AppendLine("    Projected this turn:");
-				reportEconData(econData, report);
+				reportEconData(econData, report, globalEco);
 
 				if (index >= 1)
 				{
 					var priorDataNode = history.Children[index - 1].Children[0];
-					var priorData = readEconData(priorDataNode);
+					var priorData = readRawEconData(priorDataNode);
 					report.AppendLine("    Last turn:");
-					reportEconData(priorData, report);
+					reportEconData(priorData, report, null);	// null => don't accumulate prev turn in globalEco
 				}
 			}
 		}
 
-		struct EconData
+		public struct RawEconData
 		{
 			public Dictionary<int, Dictionary<int, int>> arrays;
 		}
 
-		static private EconData readEconData(ParentNode econDataNode)
+		static private RawEconData readRawEconData(ParentNode econDataNode)
 		{
 			// I thought econ data were always OptimizedArrayNodes but apparently sometimes they are EsfArrayNodes
 			// So now need to handle both types
-			EconData data = new EconData();
+			RawEconData data = new RawEconData();
 			data.arrays = new Dictionary<int, Dictionary<int, int>>();
 			for (int n = 0; n < econDataNode.Values.Count; n++)
 			{
@@ -73,44 +79,92 @@ namespace EsfHelper
 			return data;
 		}
 
-		static private void reportEconData(EconData econData, StringBuilder report)
+		public class EconData
 		{
-			var array1 = econData.arrays[1];
-			var array2 = econData.arrays[2];
-			var array4 = econData.arrays[4];
-			var array5 = econData.arrays[5];
+			public int Taxes;
+			public int Slavery;
+			public int Trade;
+			public int Maint;
+			public int ArmyUpkeep;
+			public int NavyUpkeep;
+			public int Interest;
+			public int TributeToOverlord;
+			public int TributeFromPuppets;
+			public int OtherIncome;
+			public int OtherExpenses;
 
-			int taxes = array1[0];
-			int slavery = array1[1];
-			int trade = array1[2];
-			int maint = -array5[8];
-			int armyUpkeep = -array5[1];
-			int navyUpkeep = -array5[2]; // TODO: guess, figure out
-			int interest = array1[4];
-			int tributeToOverlord = -array5[7];
-			int tributeFromPuppets = array2[3];
-			int otherIncome = array2[4];
-			int otherExpenses = 0;	// TODO: anything not explicitly called out above
+			public int Construction;
+			public int AgentCosts;
+			public int Recruitment;
+
+			public int TotalIncome;
+			public int TotalExpenses;
+		}
+
+		static public EconData ReadEconData(RawEconData rawEconData)
+		{
+			EconData econData = new EconData();
+
+			var array1 = rawEconData.arrays[1];
+			var array2 = rawEconData.arrays[2];
+			var array4 = rawEconData.arrays[4];
+			var array5 = rawEconData.arrays[5];
+
+			econData.Taxes = array1[0];
+			econData.Slavery = array1[1];
+			econData.Trade = array1[2];
+			econData.Maint = -array5[8];
+			econData.ArmyUpkeep = -array5[1];
+			econData.NavyUpkeep = -array5[2]; // TODO: guess, figure out
+			econData.Interest = array1[4];
+			econData.TributeToOverlord = -array5[7];
+			econData.TributeFromPuppets = array2[3];
+			econData.OtherIncome = array2[4];
+			econData.OtherExpenses = 0;  // TODO: anything not explicitly called out above
 
 			// Current turn treasury deductions
 			// Don't show these as costs, since already deducted from treasury in-game.  Maybe report separately at some point.
-			int construction = -array4[0];
-			int agentCosts = 0; // TBD
-			int recruitment = 0; // TBD
+			econData.Construction = -array4[0];
+			econData.AgentCosts = 0; // TBD
+			econData.Recruitment = 0; // TBD
 
-			int totalIncome = taxes + slavery + trade + interest + tributeFromPuppets + otherIncome;
-			int totalExpense = armyUpkeep + navyUpkeep + maint + tributeToOverlord;
-			report.AppendFormat("      Taxes            {0,10:#,#}     Army Upkeep {1,10:#,#}\n", taxes, armyUpkeep);
-			report.AppendFormat("      Slave population {0,10:#,#}     Navy Upkeep {1,10:#,#}\n", slavery, navyUpkeep);
-			report.AppendFormat("      Trade            {0,10:#,#}     Maintenance {1,10:#,#}\n", trade, maint);
-			report.AppendFormat("      Tribute received {0,10:#,#}     Tribute paid{1,10:#,#}\n", tributeFromPuppets, tributeToOverlord);
-			report.AppendFormat("      Interest         {0,10:#,#}\n", interest);
+			econData.TotalIncome = econData.Taxes +
+								   econData.Slavery +
+								   econData.Trade +
+								   econData.Interest +
+								   econData.TributeFromPuppets +
+								   econData.OtherIncome;
+			econData.TotalExpenses = econData.ArmyUpkeep +
+									 econData.NavyUpkeep +
+									 econData.Maint +
+									 econData.TributeToOverlord;
+
+			return econData;
+		}
+
+		static private void reportEconData(RawEconData rawEconData, StringBuilder report, GlobalEco globalEco)
+		{
+			EconData econData = ReadEconData(rawEconData);
+
+			report.AppendFormat("      Taxes            {0,10:#,#}     Army Upkeep {1,10:#,#}\n", econData.Taxes, econData.ArmyUpkeep);
+			report.AppendFormat("      Slave population {0,10:#,#}     Navy Upkeep {1,10:#,#}\n", econData.Slavery, econData.NavyUpkeep);
+			report.AppendFormat("      Trade            {0,10:#,#}     Maintenance {1,10:#,#}\n", econData.Trade, econData.Maint);
+			report.AppendFormat("      Tribute received {0,10:#,#}     Tribute paid{1,10:#,#}\n", econData.TributeFromPuppets, econData.TributeToOverlord);
+			report.AppendFormat("      Interest         {0,10:#,#}\n", econData.Interest);
 #if NO // Don't show construction as a cost, it's already deducted from treasury in-game.  Maybe report separately at some point.
 			report.AppendFormat("                                      Construction     {0,10:#,#}\n", construction);
 #endif // NO
-			report.AppendFormat("      Other            {0,10:#,#}     Other       {1,10:#,#}\n", otherIncome, otherExpenses);
+			report.AppendFormat("      Other            {0,10:#,#}     Other       {1,10:#,#}\n", econData.OtherIncome, econData.OtherExpenses);
 			report.  AppendLine("                       ----------                 ----------");
-			report.AppendFormat("                       {0,10:#,#}                 {1,10:#,#}    = {2:#,#} net income\n", totalIncome, totalExpense, totalIncome + totalExpense);
+			report.AppendFormat("                       {0,10:#,#}                 {1,10:#,#}    = {2:#,#} net income\n", econData.TotalIncome, econData.TotalExpenses, econData.TotalIncome + econData.TotalExpenses);
+
+			if (globalEco != null)
+			{
+				globalEco.Taxes += econData.Taxes;
+				globalEco.Trade += econData.Trade;
+				globalEco.Income += econData.TotalIncome;
+				globalEco.Expenses += econData.TotalExpenses;
+			}
 		}
 	}
 }

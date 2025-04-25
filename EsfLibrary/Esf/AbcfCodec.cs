@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Forms;
 
 namespace EsfLibrary {
     public class AbcfFileCodec : AbceCodec {
@@ -19,9 +20,18 @@ namespace EsfLibrary {
             for (int i = 0; i < count; i++) {
                 // first string, then reference ID
                 string read = readString(reader);
-                result.Add(read, reader.ReadInt32());
-            }
-            return result;
+                try
+                {
+					// workaround for certain messed up keys (maybe related to special characters in dunedain keys)
+					result.Add(read, reader.ReadInt32());
+				}
+                catch (Exception ex)
+                {
+                    // we'll ignore the key but this is probably not a valid save anymore (if attempt to save), to tell the user something's wrong
+                    MessageBox.Show(ex.ToString(), "Error reading file");
+                }
+			}
+			return result;
         }
         static void WriteStringList(BinaryWriter writer, Dictionary<string, int> stringList, ValueWriter<string> writeString) {
             writer.Write(stringList.Count);

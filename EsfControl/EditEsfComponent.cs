@@ -133,8 +133,17 @@ namespace EsfControl {
 		{
             StringBuilder report = new StringBuilder();
 			Helper.OneFactionReportFromRoot(RootNode, 0, report);
+            show(report);
+		}
 
+        static public void show(StringBuilder report)
+        {
 			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			if (ret == DialogResult.None) // hack for string too long for MessageBox
+			{
+				ret = MessageBox.Show("Report was too long for this message box.\n\nCopy to clipboard anyway?",
+					"Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
+			}
 			if (ret == DialogResult.OK)
 			{
 				Clipboard.SetText(report.ToString());
@@ -145,48 +154,35 @@ namespace EsfControl {
 		{
 			StringBuilder report = new StringBuilder();
 			Helper.AllFactionEconomicsReportFromRoot(RootNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			show(report);
 		}
 
 		public void AllFactionCharactersReport()
 		{
 			StringBuilder report = new StringBuilder();
 			Helper.AllFactionCharactersReportFromRoot(RootNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			show(report);
 		}
 
 		public void VerificationReport()
         {
 			StringBuilder report = new StringBuilder();
 			Helper.VerificationReportFromRoot(RootNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			show(report);
 		}
 
 		public void FixCharacterSkills()
         {
 			StringBuilder report = new StringBuilder();
 			Helper.FixCharacterSkillsFromRoot(RootNode, report);
+			show(report);
+		}
 
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+        public void StrengthRankReport()
+        {
+			StringBuilder report = new StringBuilder();
+			Helper.StrengthRankReportFromRoot(RootNode, report);
+			show(report);
 		}
 	}
 
@@ -341,36 +337,21 @@ namespace EsfControl {
         {
 			StringBuilder report = new StringBuilder();
 			Helper.OneFactionReport(factionEntryNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			EditEsfComponent.show(report);
 		}
 
 		private void AllFactionEconomicsReport(EsfNode factionArrayNode)
 		{
 			StringBuilder report = new StringBuilder();
 			Helper.AllFactionEconomicsReport(factionArrayNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			EditEsfComponent.show(report);
 		}
 
 		private void AllFactionCharactersReport(EsfNode factionArrayNode)
 		{
 			StringBuilder report = new StringBuilder();
 			Helper.AllFactionCharactersReport(factionArrayNode, report);
-
-			var ret = MessageBox.Show(report.ToString(), "Click OK to copy report to clipboard", MessageBoxButtons.OKCancel);
-			if (ret == DialogResult.OK)
-			{
-				Clipboard.SetText(report.ToString());
-			}
+			EditEsfComponent.show(report);
 		}
 	}
 
