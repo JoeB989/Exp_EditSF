@@ -1,7 +1,10 @@
 using Accessibility;
 using EsfLibrary;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using static System.Windows.Forms.LinkLabel;
 
 namespace CampaignReportNs
 {
@@ -10,6 +13,8 @@ namespace CampaignReportNs
 		public CampaignReport()
 		{
 			InitializeComponent();
+
+			InitializeBackgroundWorker();
 
 			SetDefaultSavegameFolder();
 		}
@@ -40,12 +45,25 @@ namespace CampaignReportNs
 
 		private void GameListBox_MouseDoubleClick(object sender, MouseEventArgs e)
 		{
-			ReportSelectedSeries();
+			StartReport();
 		}
 
 		private void ReportButton_Click(object sender, EventArgs e)
 		{
-			ReportSelectedSeries();
+			StartReport();
+		}
+
+		private void StartReport()
+		{
+			_series = GameListBox.SelectedItem as SeriesName;
+			if (_series != null)
+			{
+				this.ProgressBar.Minimum = 0;
+				this.ProgressBar.Maximum = _saveGamesLookup[_series.Faction].Count;
+
+				this.Cursor = Cursors.WaitCursor;
+				backgroundReport.RunWorkerAsync();
+			}
 		}
 
 		private string _saveGamePath;
@@ -148,45 +166,65 @@ namespace CampaignReportNs
 			return null;
 		}
 
+		private void InitializeBackgroundWorker()
+		{
+			backgroundReport.DoWork += BackgroundReport_DoWork;
+			backgroundReport.RunWorkerCompleted += BackgroundReport_RunWorkerCompleted;
+			backgroundReport.WorkerReportsProgress = true;
+			backgroundReport.ProgressChanged += BackgroundReport_ProgressChanged;
+		}
+
+		private void BackgroundReport_DoWork(object sender, DoWorkEventArgs e)
+		{
+			ReportSelectedSeries();
+			e.Result = true;
+		}
+
+		private void BackgroundReport_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			this.Cursor = Cursors.Default;
+
+			string tsv = _report.GetTSV();
+			if (tsv.Length > 0)  // because SetText throws NullReferenceException if string is "" (which isn't null)
+			{
+				StringBuilder msg = new StringBuilder();
+				msg.AppendFormat("{0} campaign report, {1} turns processed", _series.Faction, _processed);
+				if (_duplicates > 0)
+					msg.AppendFormat(", {0} duplicate turns ignored", _duplicates);
+				msg.AppendLine("\n");
+				msg.Append("Pressing OK will copy TSV to clipboard.  Then Paste to Excel");
+
+				MessageBox.Show(this, msg.ToString(), "Report complete");
+				Clipboard.SetText(tsv);
+			}
+			else
+			{
+				MessageBox.Show(this, "No details", "No Report generated");
+			}
+		}
+
+		private void BackgroundReport_ProgressChanged(object sender, ProgressChangedEventArgs e)
+		{
+			this.ProgressBar.Value = (int)e.UserState;
+		}
+
+		private SeriesName _series;
+		private Report _report;
+		private int _processed;
+		private int _duplicates;
+
 		private void ReportSelectedSeries()
 		{
-			var series = GameListBox.SelectedItem as SeriesName;
-			if (series != null)
+			var files = _saveGamesLookup[_series.Faction];
+
+			_report = new Report();
+			_processed = 0;
+			_duplicates = 0;
+			for (int i = 0; i < files.Count; i++)
 			{
-				var files = _saveGamesLookup[series.Faction];
-				this.ProgressBar.Minimum = 0;
-				this.ProgressBar.Maximum = files.Count;
-
-				Report report = new Report();
-				int processed = 0;
-				int duplicates = 0;
-				for (int i = 0; i < files.Count; i++)
-				{
-					this.ProgressBar.Value = i;
-
-					if (report.AddSaveGame(files[i].File, ref duplicates))
-						processed++;
-				}
-				this.ProgressBar.Value = files.Count;
-
-				string tsv = report.GetTSV();
-				if (tsv.Length > 0)  // because SetText throws NullReferenceException if string is "" (which isn't null)
-				{
-					Clipboard.SetText(tsv);
-
-					StringBuilder msg = new StringBuilder();
-					msg.AppendFormat("{0} campaign report, {1} turns processed", series.Faction, processed);
-					if (duplicates > 0)
-						msg.AppendFormat(", {0} duplicate turns ignored", duplicates);
-					msg.AppendLine("\n");
-					msg.Append("TSV copied to clipboard.  Now Paste to Excel");
-
-					MessageBox.Show(msg.ToString(), "Report complete");
-				}
-				else
-				{
-					MessageBox.Show("No details", "No Report generated");
-				}
+				if (_report.AddSaveGame(files[i].File, ref _duplicates))
+					_processed++;
+				backgroundReport.ReportProgress(0, i+1);
 			}
 		}
 

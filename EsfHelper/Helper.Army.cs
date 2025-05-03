@@ -50,7 +50,9 @@ namespace EsfHelper
 			public enum ForceType { FieldArmy, GarrisonArmy, FieldNavy, GarrisonNavy };
 			public readonly ForceType Type;
 			public string Name;
-			public int Units;
+			public int Units;			// includes general
+			//public uint GeneralRank;	// 0-9
+			public uint ArmyRank;		// 0-9
 
 			public MilitaryForce (bool isArmy, bool isGarrison)
 			{
@@ -73,7 +75,7 @@ namespace EsfHelper
 			{
 				var militaryForce = FindChild(armyNode, "MILITARY_FORCE");
 				isNavy = ((OptimizedBoolNode)militaryForce.Values[17]).Value;
-				//isGarrison = ((OptimizedBoolNode)militaryForce.Values[18]).Value;
+				//isGarrison = ((OptimizedBoolNode)militaryForce.Values[18]).Value; - not reliable
 
 				var militaryForceLegacy = FindChild(militaryForce, "MILITARY_FORCE_LEGACY");
 				string armyName;
@@ -83,8 +85,8 @@ namespace EsfHelper
 				force.Name = armyName;
 
 				//uint armyId = ((OptimizedUIntNode)militaryForceLegacy.Values[0]).Value;
-				//var campaignSkills = FindChild(militaryForceLegacy, "CAMPAIGN_SKILLS");
-				//uint rank = ((OptimizedUIntNode)campaignSkills.Values[5]).Value + 1;    // 0-based
+				var campaignSkills = FindChild(militaryForceLegacy, "CAMPAIGN_SKILLS");
+				force.ArmyRank = ((OptimizedUIntNode)campaignSkills.Values[5]).Value;    // 0-9
 				//uint experience = ((OptimizedUIntNode)campaignSkills.Values[6]).Value;
 
 				// units - sibling of military force legacy, may not be present (for legacy armies)
@@ -93,6 +95,9 @@ namespace EsfHelper
 				var unitContainer = FindChild(militaryForce, "UNIT_CONTAINER");
 				var unitsArray = unitContainer.Children[0];
 				force.Units = unitsArray.Children.Count;
+
+				// TODO: how to find general for army?
+				//force.GeneralRank=0;	// TODO: read from characters
 
 				forces.Add(force);
 			}

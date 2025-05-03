@@ -29,6 +29,7 @@ namespace CampaignReportNs
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.backgroundReport = new System.ComponentModel.BackgroundWorker();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CampaignReport));
 			label1 = new Label();
 			FolderTextBox = new TextBox();
@@ -164,5 +165,6 @@ namespace CampaignReportNs
 		private Button ReportButton;
 		private ProgressBar ProgressBar;
 		private Label label3;
+		private System.ComponentModel.BackgroundWorker backgroundReport;
 	}
 }

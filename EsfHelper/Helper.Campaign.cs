@@ -22,19 +22,49 @@ namespace EsfHelper
 		public int TotalExpenses;
 		public int TradeIncome;
 
-		public int FieldArmies, FieldLandUnits;
-		public int GarrisonArmies, GarrisonLandUnits;
-		public int FieldNavies, FieldNavalUnits;
-		public int GarrisonNavies, GarrisonNavalUnits;
+		//public int FieldArmies, FieldLandUnits;
+		//public int GarrisonArmies, GarrisonLandUnits;
+		//public int FieldNavies, FieldNavalUnits;
+		//public int GarrisonNavies, GarrisonNavalUnits;
+		public IEnumerable<MilitaryForce> FieldArmies;
+		public IEnumerable<MilitaryForce> GarrisonArmies;
+		public IEnumerable<MilitaryForce> FieldNavies;
+		public IEnumerable<MilitaryForce> GarrisonNavies;
 
-		public const string FactionStrengthDescription = "Regions + units/10  (including armies, navies, and garrisons)";
+		public int FieldLandUnits { get { return (from force in FieldArmies select force.Units).Sum(); } }
+		public int FieldNavalUnits { get { return (from force in FieldNavies select force.Units).Sum(); } }
+		public int GarrisonLandUnits { get { return (from force in GarrisonArmies select force.Units).Sum(); } }
+		public int GarrisonNavalUnits { get { return (from force in GarrisonNavies select force.Units).Sum(); } }
+
+		//public const string FactionStrengthDescription = "Regions + units/10  (including armies, navies, and garrisons)";
+		//public const string FactionStrengthDescription = "Sum of strengths of Armies and Navies (which are adjusted for force rank)";
+		public const string FactionStrengthDescription = "Sum of strengths of Field and Garrison armies and navies (slightly adjusted for force rank)";
 		public double Strength
 		{
 			get
 			{
-				return (double)Regions +
-					(double)(FieldLandUnits + GarrisonLandUnits + FieldNavalUnits + GarrisonNavalUnits) / 10.0;
+				//return (double)Regions +
+				//	(double)(FieldLandUnits + GarrisonLandUnits + FieldNavalUnits + GarrisonNavalUnits) / 10.0;
+				double strength = 0;
+				foreach (var force in FieldArmies)
+					strength += ArmyStrength(force);
+				foreach (var force in FieldNavies)
+					strength += ArmyStrength(force);
+				foreach (var force in GarrisonArmies)
+					strength += ArmyStrength(force);
+				foreach (var force in GarrisonNavies)
+					strength += ArmyStrength(force);
+				return strength;
 			}
+		}
+
+		static private double ArmyStrength(MilitaryForce force)
+		{
+			double generalAdder = 0.1;	// .1 for every rank above 0
+			double armyAdder = 0.1;     // .1 for every rank above 0
+			double generalFactor = 1; //TEMP + (double)force.GeneralRank * generalAdder;
+			double armyFactor = 1 + (double)force.ArmyRank * armyAdder;
+			return (double)force.Units * generalFactor * armyFactor;
 		}
 	}
 
@@ -91,34 +121,18 @@ namespace EsfHelper
 
 			// Military (break into armies/fleets and field/garrison)
 			var forces = Helper.GetMilitaryForces(factionNode);
-			var subset = from force in forces
-						 where force.Type == MilitaryForce.ForceType.FieldArmy
-						 select force;
-			faction.FieldArmies = subset.Count();
-			faction.FieldLandUnits = (from force in subset
-									  select force.Units).Sum();
-
-			subset = from force in forces
-					 where force.Type == MilitaryForce.ForceType.GarrisonArmy
-					 select force;
-			faction.GarrisonArmies = subset.Count();
-			faction.GarrisonLandUnits = (from force in subset
-									  select force.Units).Sum();
-
-			subset = from force in forces
-					 where force.Type == MilitaryForce.ForceType.FieldNavy
-					 select force;
-			faction.FieldNavies = subset.Count();
-			faction.FieldNavalUnits = (from force in subset
-									  select force.Units).Sum();
-
-			subset = from force in forces
-					 where force.Type == MilitaryForce.ForceType.GarrisonNavy
-					 select force;
-			faction.GarrisonNavies = subset.Count();
-			faction.GarrisonNavalUnits = (from force in subset
-									  select force.Units).Sum();
-
+			faction.FieldArmies = from force in forces
+								  where force.Type == MilitaryForce.ForceType.FieldArmy
+								  select force;
+			faction.GarrisonArmies = from force in forces
+									 where force.Type == MilitaryForce.ForceType.GarrisonArmy
+									 select force;
+			faction.FieldNavies = from force in forces
+								  where force.Type == MilitaryForce.ForceType.FieldNavy
+								  select force;
+			faction.GarrisonNavies = from force in forces
+									 where force.Type == MilitaryForce.ForceType.GarrisonNavy
+									 select force;
 			return faction;
 		}
 

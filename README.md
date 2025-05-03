@@ -6,6 +6,7 @@ Originally copied from [EditSF 1.2.7](https://sourceforge.net/p/packfilemanager/
 ### Contents
 - [EditSF 1.3.0](#EditSF-1.3.0)
 - [CompareSF](#CompareSF)
+- [CampaignReport](#CampaignReport)
 - [TDD_TileGen](#TDD_TileGen)
 - [TDD_Rotate](#TDD_Rotate)
 - [How to build](#How-to-build)

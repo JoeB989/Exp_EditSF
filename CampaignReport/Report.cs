@@ -88,7 +88,7 @@ namespace CampaignReportNs
 			// header includes an extra cell describing Faction Strength computation
 			sb.AppendFormat("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\tFaction Strength = {8}\n",
 				"Turn",
-				"Faction", "Prestige", "Regions", "Strength",
+				"Faction ID", "Prestige", "Regions", "Strength",
 				"Treasury", "Net Income", "Trade Income",
 				SeriesTurnFaction.FactionStrengthDescription);
 		}
