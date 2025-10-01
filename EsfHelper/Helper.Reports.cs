@@ -1,5 +1,9 @@
 ﻿using EsfLibrary;
+using System.Collections;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Text;
+using static EsfHelper.Helper;
 
 namespace EsfHelper
 {
@@ -91,7 +95,7 @@ namespace EsfHelper
 			gameMonth = gameData.GameMonth;
 
 			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)gameData.GameMonth + 1);
-			uint display_year = gameData.GameYear - 752; // hack guess
+			uint display_year = gameData.GameYear - 752; // CA based year 0 off founding of Rome
 
 			report.AppendFormat("Save file: {0}\n    Difficulty {1}\n    Turn {2}, {3} {4}\n    Player faction: {5}\n",
 				SaveFileName, gameData.Difficulty, gameData.Turn, display_year, monthName, gameData.PlayerFaction);
@@ -104,9 +108,11 @@ namespace EsfHelper
 			public uint GameYear;
 			public uint GameMonth;
 			public string Difficulty;
+
+			public Bitmap Map;
 		}
 
-		static public GameData GetGameData(EsfNode rootNode)
+		static public GameData GetGameData(EsfNode rootNode, bool readMap=false)
 		{
 			GameData gameData = new GameData();
 
@@ -115,14 +121,48 @@ namespace EsfHelper
 			gameData.Turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
 
 			var dateNode = FindChild(saveGameHeader, "DATE");
-			gameData.GameYear = ((OptimizedUIntNode)dateNode.Values[0]).Value;
+			gameData.GameYear = ((OptimizedUIntNode)dateNode.Values[0]).Value; // 752-based!  CA based year 0 off founding of Rome
 			gameData.GameMonth = ((OptimizedUIntNode)dateNode.Values[2]).Value; // 0-based
 
 			var campaignSetup = GetCampaignSetupNode(rootNode);
 			int diff = ((OptimizedIntNode)campaignSetup.Values[14]).Value;
 			gameData.Difficulty = difficultyFromInt(diff);
 
+			if (readMap)
+			{
+				var mapsNode = FindChild(saveGameHeader, "MAPS").Children[0];
+				// Note: verified that root/COMPRESSED_DATA/SAVE_GAME_HEADER/MAPS has the same map
+				gameData.Map = ReadMap (mapsNode);
+			}
+
 			return gameData;
+		}
+
+		static private Bitmap ReadMap(ParentNode mapsNode)
+		{
+			int width = (int)((OptimizedUIntNode)mapsNode.Values[1]).Value;
+			int height = (int)((OptimizedUIntNode)mapsNode.Values[2]).Value;
+			EsfArrayNode<uint> mapData = (EsfArrayNode<uint>)mapsNode.Values[4];
+
+			// have to convert from uint[] to byte[]
+			byte[] byteData = new byte[mapData.Value.Length * 4];
+			for (int i = 0; i < mapData.Value.Length; i++)
+			{
+				byte[] uintBytes = BitConverter.GetBytes(mapData.Value[i]);
+				Buffer.BlockCopy(uintBytes, 0, byteData, i * sizeof(uint), sizeof(uint));
+			}
+
+			Bitmap bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+			// Lock the bitmap's bits so we can copy the image data to it
+			BitmapData bmpData = bmp.LockBits(
+				new Rectangle(0, 0, width, height),
+				ImageLockMode.WriteOnly,
+				bmp.PixelFormat
+			);
+			IntPtr ptr = bmpData.Scan0;
+			System.Runtime.InteropServices.Marshal.Copy(byteData, 0, ptr, byteData.Length);
+			bmp.UnlockBits(bmpData);
+			return bmp;
 		}
 
 		static private void gdpReport(StringBuilder report, GlobalEco globalEco)

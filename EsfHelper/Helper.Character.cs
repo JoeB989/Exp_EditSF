@@ -1,4 +1,5 @@
 ﻿using EsfLibrary;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Text;
 
@@ -42,22 +43,26 @@ namespace EsfHelper
 				}
 			}
 
-			// TODO: find characters that have the 'ruler' political party but are not parented in the family trree
-			// These are lost characters that should be rehomed into Other Noblkes buy giving them the 'council' political party
-			string factionName = ((StringNode)(factionNode.AllNodes[1])).Value;
-			//var factionFamily = from member in familyTree
-			//					where member.SourceFaction == factionName
-			//					select member;
-
 			report.AppendLine("  Characters");
-			var characters = FindChild(factionNode, "CHARACTER_ARRAY");
+			var characterArray = FindChild(factionNode, "CHARACTER_ARRAY");
 			int charIndex = 0;
-			foreach (var charNode in characters.Children)
+			List<CharacterInfo> characters = new List<CharacterInfo>();
+			// two passes; 1) read all chars, 2) report each char
+			foreach (var charNode in characterArray.Children)
 			{
-				var character = charNode.Children[0];
-				reportCharacter(character, charIndex, report,
-					game_year, game_month, officers, governors, familyTree);
-				charIndex++;
+				var characterNode = charNode.Children[0];
+				var character = GetCharacterInfo(characterNode, game_year, game_month,
+				officers, governors, familyTree);
+
+				character.CharIndex = charIndex++;
+				character.CharNode = characterNode;
+
+				characters.Add(character);
+			}
+			foreach (var character in characters)
+			{
+				reportCharacter(character.CharNode, character, report,
+					game_year, game_month, officers, governors, familyTree, characters);
 			}
 
 			// candidates from CHARACTER_RECRUITMENT_POOL
@@ -65,66 +70,193 @@ namespace EsfHelper
 			var recruitmentPool = FindChild(factionNode, "CHARACTER_RECRUITMENT_POOL_MANAGER");
 			var poolBlock = recruitmentPool.Children[0].Children[0].Children[0].Children[0];
 			charIndex = 0;
+			List<CharacterInfo> candidates = new List<CharacterInfo>();
 			foreach (var poolEntry in poolBlock.Children)
 			{
-				var character = poolEntry.Children[0];
-				reportCharacter(character, charIndex, report,
-					game_year, game_month, officers, governors, familyTree);
-				charIndex++;
+				var characterNode = poolEntry.Children[0];
+				var candidate = GetCharacterInfo(characterNode, game_year, game_month,
+				officers, governors, familyTree);
+
+				candidate.CharIndex = charIndex++;
+				candidate.CharNode = characterNode;
+				candidates.Add(candidate);
+			}
+			foreach (var candidate in candidates)
+			{
+				reportCharacter(candidate.CharNode, candidate, report,
+					game_year, game_month, officers, governors, familyTree, characters);
 			}
 		}
 
-		static private void reportCharacter(ParentNode character, int charIndex, StringBuilder report,
-			uint game_year, uint game_month,
-			Dictionary<uint, string> officers, Dictionary<uint, string> governors,
-			List<FamilyMember> familyTree)
+		public struct CharacterInfo
 		{
-			uint charId = ((OptimizedUIntNode)character.Values[0]).Value;
+			public int CharIndex;	// used for reporting
+			public ParentNode CharNode;
 
-			if (character.Values.Count > 11)    // candidates will not have all these
+			public bool ShowCharacter;
+			public uint CharId;
+			public bool Deceased;
+			public uint Influence;
+			public string Name;
+			public uint Rank;
+			public int Authority;
+			public int Subterfuge;
+			public int Zeal;
+			public string CurrentFaction;
+			public string OriginalFaction;
+			public uint BirthYear;
+			public uint BirthMonth;
+			public int Age;
+			public string Occupation;
+			public string PoliticalParty;
+			public string Office;
+			public string GovernorOf;
+
+			//public bool InFamilyTree;
+			public FamilyMember FamilyTreeEntry;
+		}
+
+		static private void reportCharacter(ParentNode characterNode, CharacterInfo character, StringBuilder report,
+			uint game_year, uint game_month,
+			Dictionary<uint, string> officers,
+			Dictionary<uint, string> governors,
+			List<FamilyMember> familyTree, List<CharacterInfo> characters)
+		{
+			if (!character.ShowCharacter)
+				return;
+
+			// TODO: find characters that have the 'ruler' political party but are not parented in the family trree
+			//string factionName = ((StringNode)(factionNode.AllNodes[1])).Value;
+			//var factionFamily = from member in familyTree
+			//					where member.SourceFaction == factionName
+			//					select member;
+
+			// Validation for hidden confederated generals
+			// These are lost characters that should be rehomed into Other Nobles by giving them the 'council' political party
+			//
+			// - other nobles have
+			//		family parent id 0
+			//		_council party
+			// - valid family tree members have
+			//		family parent id set
+			//		_ruler party
+			//		parent id is a character in this faction (may be dead)
+			// - hidden/lost confederated characters
+			//		_ruler party
+			//		family parent id set
+			//		parent id is a character not in this faction (or 0)
+			// - visible confederated characters
+			//		_council party
+			//		family parent id 0 (or set, doesn't matter)
+			//
+			string stringFamilyTree = string.Empty;
+			if (character.PoliticalParty.ToLower().Contains("_ruler"))
 			{
-				float important_value = ((OptimizedFloatNode)character.Values[11]).Value;
-				bool showCharacter = important_value > 5.5f;    // not sure why, but seems correct so far; 10 = real character, 5 = not real
-				if (!showCharacter)
-					return;
+				bool parentInFaction = (from c in characters
+										where c.CharId == character.FamilyTreeEntry.ParentId
+										select c).Count() > 0;
+				// TODO: check if
+				//  parent is a live character in this faction
+				//  parent is a deade character in family, from this faction
+				if (!parentInFaction)
+					stringFamilyTree = "(LOST)";
 			}
+			//if (character.FamilyTreeEntry != null)
+			//	stringFamilyTree = string.Format(" (family tree[{0}])", character.FamilyTreeEntry.NodeIndex);
+			//if (character.InFamilyTree)
+			//	stringFamilyTree = " (in family tree)";
 
-			var details = FindChild(character, "CHARACTER_DETAILS");
-			uint influence = ((OptimizedUIntNode)details.Values[15]).Value;
+			string confederated_from = string.Empty;
+			if (character.CurrentFaction != character.OriginalFaction)
+				confederated_from = string.Format(" [from {0}]", character.OriginalFaction);
+			report.AppendFormat("  [{0}] {1} id:{2} (rank {3} {4})", character.CharIndex,
+				character.Name, character.CharId, character.Rank, character.Occupation);
+
+			report.AppendFormat(", {0}{1}{2}", character.PoliticalParty, confederated_from, stringFamilyTree);
+			if (character.GovernorOf != null)
+				report.AppendFormat(", Governor of {0}", character.GovernorOf);
+			if (character.Office != null)
+				report.AppendFormat(", {0}", character.Office);
+			if (character.Deceased)
+				report.Append(" DECEASED");
+			report.AppendLine();
+
+			// TEMP: for debugging
+			//report.AppendFormat("      Debug info: id:{0} {1}\n", charId, nameKey);
+
+			// add other stuff to help disambiguate when name is wrong
+			report.AppendFormat("      Age {0}  Influence {1}", character.Age, character.Influence);
+			report.AppendFormat("  Authority(Command) {0}", character.Authority);
+			report.AppendFormat("  Cunning(Management) {0}", character.Subterfuge);
+			report.AppendFormat("  Zeal(Leadership) {0}", character.Zeal);
+			report.AppendLine();
+
+			var details = FindChild(characterNode, "CHARACTER_DETAILS");
 			var traitsNode = FindChild(details, "TRAITS");
 			var traitNode = traitsNode.Children[0];
 
+			foreach (RecordEntryNode trait in traitNode.Children)
+			{
+				report.AppendFormat("      {0} = {1}\n", trait.Values[0], trait.Values[1]);
+			}
+		}
+
+		static public CharacterInfo GetCharacterInfo(ParentNode characterNode,
+			uint game_year, uint game_month,
+			Dictionary<uint, string> officers,
+			Dictionary<uint, string> governors,
+			List<FamilyMember> familyTree)
+		{
+			var character = new CharacterInfo();
+			character.CharId = ((OptimizedUIntNode)characterNode.Values[0]).Value;
+
+			character.ShowCharacter = true;
+			if (characterNode.Values.Count > 11)    // candidates will not have all these
+			{
+				float important_value = ((OptimizedFloatNode)characterNode.Values[11]).Value;
+				character.ShowCharacter = important_value > 5.5f;    // not sure why, but seems correct so far; 10 = real character, 5 = not real
+				if (!character.ShowCharacter)
+					return character;
+			}
+
+			var details = FindChild(characterNode, "CHARACTER_DETAILS");
+			character.Influence = ((OptimizedUIntNode)details.Values[15]).Value;
+
 			string nameKey = readNameKey(details);
-			string name;
-			if (!TddHardcodedNames.TryGetValue(nameKey, out name))
-				name = nameKey;
+			if (string.IsNullOrWhiteSpace(nameKey))
+			{
+				character.ShowCharacter = false;
+				return character;
+			}
+			if (!TddHardcodedNames.TryGetValue(nameKey, out character.Name))
+				character.Name = nameKey;
+
+			var test_attributes = getAgentAttributes(details);
+			test_attributes.TryGetValue("authority", out character.Authority);
+			test_attributes.TryGetValue("subterfuge", out character.Subterfuge);
+			test_attributes.TryGetValue("zeal", out character.Zeal);
 
 			// skip placeholders with influence 0
 			// NOTE: Deceased also have influence 0
 			// (if this isn't distinct enough, they also have command/management/leadership 0 as well
-			bool deceased = false;
-			if (influence <= 0)
+			character.Deceased = false;
+			if (character.Influence <= 0)
 			{
-				//var test_attributes = getAgentAttributes(details);
-				//int authority = 0, subterfuge = 0, zeal = 0;
-				//test_attributes.TryGetValue("authority", out authority);
-				//test_attributes.TryGetValue("subterfuge", out subterfuge);
-				//test_attributes.TryGetValue("zeal", out zeal);
 
-				//if (authority == 0)
-					return;				// unused placeholder
-				//else
-				//	deceased = true;	// deceased
+				if (character.Authority == 0)
+				{
+					character.ShowCharacter = false;
+					//return character;             // unused placeholder
+				}
+										//else
+										//	deceased = true;	// deceased - nope, not valid
 			}
 
 			// NOTE: deceased info is actually stored in family_tree, can look up by faction
 			// Deceased characters are no longer in the faction's CHARACTER_ARRAY so don't look for them there
 
-			string current_faction = ((StringNode)details.Values[1]).Value;
-			string original_faction = ((StringNode)details.Values[26]).Value;
-			string confederated_from = string.Empty;
-			if (current_faction != original_faction)
-				confederated_from = string.Format(" [from {0}]", original_faction);
+			character.CurrentFaction = ((StringNode)details.Values[1]).Value;
+			character.OriginalFaction = ((StringNode)details.Values[26]).Value;
 
 			//uint NOT_sex_enum = ((OptimizedUIntNode)details.Values[4]).Value;
 			//string NOT_sex;
@@ -137,60 +269,33 @@ namespace EsfHelper
 			//}
 
 			var dateNodes = findChildren(details, "DATE");
-			uint birth_year = ((OptimizedUIntNode)dateNodes[0].Values[0]).Value;
-			uint birth_month = ((OptimizedUIntNode)dateNodes[0].Values[2]).Value;
-			int age = computeAge(birth_year, birth_month, game_year, game_month);
-			//int age = (int)game_year - (int)birth_year; // int just in case goes negative
-			//if (game_month < birth_month)
-			//	age--;
+			character.BirthYear = ((OptimizedUIntNode)dateNodes[0].Values[0]).Value;
+			character.BirthMonth = ((OptimizedUIntNode)dateNodes[0].Values[2]).Value;
+			character.Age = computeAge(character.BirthYear, character.BirthMonth, game_year, game_month);
 
 			// 2nd DATE node seems to be the date booted from army
 			uint boot_year = ((OptimizedUIntNode)dateNodes[1].Values[0]).Value;
 			bool booted = boot_year > 0;
 
-			var familyMember = (from member in familyTree
-								where member.CharId == charId
-								select member).FirstOrDefault();
-			bool inFamilyTree = (familyMember != null);
+			character.FamilyTreeEntry = (from member in familyTree
+										 where member.CharId == character.CharId
+										 select member).FirstOrDefault();
+			//character.InFamilyTree = (familyMember != null) && familyMember.ThirdLastBool;
 
-			string stringFamilyTree = string.Empty;
-#if NO // replaced by deceased testing above
-			bool deceased = false;
-			if (inFamilyTree)
-			{
-				//stringFamilyTree = " (in family tree)";
-				if (familyMember.ThirdLastBool)
-					stringFamilyTree += " [3rd-last TRUE]";
-				deceased = familyMember.Deceased;
-			}
-#endif // NO
-
-#if NO
-			var familyMember = (from member in factionFamily
-								where member.NameKey == nameKey
-								select member).FirstOrDefault();
-			if (familyMember != null)
-			{
-				;
-			}
-#endif // NO
-
-
-			string occupation = null;
-			if (character.Values.Count > 1)
-				occupation = ((StringNode)character.Values[1]).Value;
+			if (characterNode.Values.Count > 1)
+				character.Occupation = ((StringNode)characterNode.Values[1]).Value;
 			else
-				occupation = "candidate";
+				character.Occupation = "candidate";
 
-			string politicalParty = ((StringNode)details.Values[16]).Value;
+			character.PoliticalParty = ((StringNode)details.Values[16]).Value;
 			//if (string.IsNullOrWhiteSpace(occupation))
 			//    occupation = "candidate"; // TODO: not always right (e.g. for wife)
-			string office = officers.ContainsKey(charId) ? officers[charId] : null;
-			string governorOf = null;
-			governors.TryGetValue(charId, out governorOf);
+			character.Office = officers.ContainsKey(character.CharId) ? officers[character.CharId] : null;
+			character.GovernorOf = null;
+			governors.TryGetValue(character.CharId, out character.GovernorOf);
 
-			if ((governorOf != null) && (occupation == "general"))
-				occupation = "governor";
+			if ((character.GovernorOf != null) && (character.Occupation == "general"))
+				character.Occupation = "governor";
 
 			// A booted character has no LOS but is not deceased
 #if NOT_CORRECT_YET // regular statesmen incorrectly show as deceased
@@ -204,42 +309,9 @@ namespace EsfHelper
 #endif // NOT_CORRECT_YET
 
 			var campaignSkills = FindChild(details, "CAMPAIGN_SKILLS");
-			uint rank = 1 + ((OptimizedUIntNode)campaignSkills.Value[5]).Value;
+			character.Rank = 1 + ((OptimizedUIntNode)campaignSkills.Value[5]).Value;
 
-			report.AppendFormat("  [{0}] {1} id:{2} (rank {3} {4})", charIndex, name, charId, rank, occupation);
-			report.AppendFormat(", {0}{1}{2}", politicalParty, confederated_from, stringFamilyTree);
-			if (governorOf != null)
-				report.AppendFormat(", Governor of {0}", governorOf);
-			if (office != null)
-				report.AppendFormat(", {0}", office);
-			if (deceased)
-				report.Append(" DECEASED");
-			report.AppendLine();
-
-			// TEMP: for debugging
-			//report.AppendFormat("      Debug info: id:{0} {1}\n", charId, nameKey);
-
-			// character_details / agent_attributes(for general or governor)
-			//	cunning(TDD management)[0] "subterfuge"
-			//	zeal(TDD leadership)[1] "zeal"
-			// authority(TDD command)[2] "authority"
-			var attributes = getAgentAttributes(details);
-			int attr;
-
-			// add other stuff to help disambiguate when name is wrong
-			report.AppendFormat("      Age {0}  Influence {1}", age, influence);
-			if (attributes.TryGetValue("authority", out attr))
-				report.AppendFormat("  Authority(Command) {0}", attr);
-			if (attributes.TryGetValue("subterfuge", out attr))
-				report.AppendFormat("  Cunning(Management) {0}", attr);
-			if (attributes.TryGetValue("zeal", out attr))
-				report.AppendFormat("  Zeal(Leadership) {0}", attr);
-			report.AppendLine();
-
-			foreach (RecordEntryNode trait in traitNode.Children)
-			{
-				report.AppendFormat("      {0} = {1}\n", trait.Values[0], trait.Values[1]);
-			}
+			return character;
 		}
 
 		static private string readNameKey(ParentNode detailsNode)
@@ -275,10 +347,13 @@ namespace EsfHelper
 			return age;
 		}
 
-		[System.Diagnostics.DebuggerDisplay("{Name}")]
-		private class FamilyMember
+		//[System.Diagnostics.DebuggerDisplay("{Name}")]
+		public class FamilyMember
 		{
+			//public int NodeIndex;	// not needed, FamilyTree is ordered by CharId
 			public uint CharId;
+			public uint ParentId;
+			public bool IsLost;
 			public bool Deceased;
 			public string SourceFaction;
 			public string NameKey;
@@ -296,38 +371,15 @@ namespace EsfHelper
 		static private List<FamilyMember> ScanFamilyTree(ParentNode FamilyTreeNode)
 		{
 			List<FamilyMember> familyTree = new List<FamilyMember>();
+			int nodeIndex = 0;
 			foreach (ParentNode memberNode in FamilyTreeNode.Children)
 			{
-#if OLD
-				bool realPerson = ((OptimizedBoolNode)memberNode.Values[1]).Value;
-				if (realPerson)
-				{
-					// all factions, in case we cross-married
-					FamilyMember member = new FamilyMember();
-					member.raw = memberNode;
-					member.MemberId = ((OptimizedUIntNode)memberNode.Values[0]).Value;
-					member.Faction = ((StringNode)memberNode.Values[2]).Value;
-
-					var detailsNode = FindChild(memberNode, "CHARACTER_DETAILS");
-					member.CharId = ((OptimizedUIntNode)detailsNode.Values[15]).Value;
-					member.PoliticalParty = ((StringNode)detailsNode.Values[16]).Value;
-					member.NameKey = readNameKey(detailsNode);
-					// somne have empty name key - should we reject those?
-					if (string.IsNullOrEmpty(member.NameKey))
-						continue;
-					TddHardcodedNames.TryGetValue(member.NameKey, out member.Name);
-
-					var dateNode = FindChild(memberNode, "DATE");
-					member.BirthYear = ((OptimizedUIntNode)dateNode.Values[0]).Value;
-					member.BirthMonth = ((OptimizedUIntNode)dateNode.Values[2]).Value;
-
-					familyTree.Add(member);
-				}
-#endif // OLD
 				// all factions, in case we cross-married
 				FamilyMember member = new FamilyMember();
 				member.raw = memberNode;
+				//member.NodeIndex = nodeIndex++;
 				member.CharId = ((OptimizedUIntNode)memberNode.Values[0]).Value;
+				member.ParentId = ((OptimizedUIntNode)memberNode.Values[4]).Value;
 
 				// TODO: I DON'T THINK THIS IS RIGHT
 				member.Deceased = ((OptimizedBoolNode)memberNode.Values[1]).Value;

@@ -2,8 +2,11 @@ using Accessibility;
 using EsfLibrary;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using static System.Windows.Forms.LinkLabel;
 
 namespace CampaignReportNs
@@ -187,19 +190,62 @@ namespace CampaignReportNs
 			string tsv = _report.GetTSV();
 			if (tsv.Length > 0)  // because SetText throws NullReferenceException if string is "" (which isn't null)
 			{
+				string gifFileName = _series.Faction + ".gif";
+				string gifFilePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+					gifFileName);
+
 				StringBuilder msg = new StringBuilder();
 				msg.AppendFormat("{0} campaign report, {1} turns processed", _series.Faction, _processed);
 				if (_duplicates > 0)
 					msg.AppendFormat(", {0} duplicate turns ignored", _duplicates);
 				msg.AppendLine("\n");
 				msg.Append("Pressing OK will copy TSV to clipboard.  Then Paste to Excel");
+				if (_exportMapGif)
+				{
+					msg.AppendFormat("\nAnd animated GIF will be written to Pictures\\{0}", gifFileName);
+				}
 
 				MessageBox.Show(this, msg.ToString(), "Report complete");
 				Clipboard.SetText(tsv);
+
+				if (_exportMapGif)
+				{
+					GifBitmapEncoder gifEnc = new GifBitmapEncoder();
+					_report.GetMapAnim(gifEnc);
+					saveAnimatedGif(gifFilePath, gifEnc);
+				}
 			}
 			else
 			{
 				MessageBox.Show(this, "No details", "No Report generated");
+			}
+		}
+
+		private void saveAnimatedGif(string gifFilePath, GifBitmapEncoder gifEnc)
+		{
+			// This creates a gif that animates only once
+			// The .net GifBitmapEncoder is not capable of writing the looping instruction
+#if not_good_enough
+			using (FileStream fs = new FileStream(gifFilePath, FileMode.Create))
+			{
+				gifEnc.Save(fs);
+			}
+#endif // not_good_enough
+
+			// From https://stackoverflow.com/questions/18719302/net-creating-a-looping-gif-using-gifbitmapencoder
+			// We can manually inject the looping instruction into the gif using the NETSCAPE2.0 Application Extension,
+			// after the gif header.
+			using (var ms = new MemoryStream())
+			{
+				gifEnc.Save(ms);
+				var fileBytes = ms.ToArray();
+				// This is the NETSCAPE2.0 Application Extension.
+				var applicationExtension = new byte[] { 33, 255, 11, 78, 69, 84, 83, 67, 65, 80, 69, 50, 46, 48, 3, 1, 0, 0, 0 };
+				var newBytes = new List<byte>();
+				newBytes.AddRange(fileBytes.Take(13));
+				newBytes.AddRange(applicationExtension);
+				newBytes.AddRange(fileBytes.Skip(13));
+				File.WriteAllBytes(gifFilePath, newBytes.ToArray());
 			}
 		}
 
@@ -213,6 +259,8 @@ namespace CampaignReportNs
 		private int _processed;
 		private int _duplicates;
 
+		private bool _exportMapGif = true;	// no UI way to specify yet
+
 		private void ReportSelectedSeries()
 		{
 			var files = _saveGamesLookup[_series.Faction];
@@ -222,7 +270,7 @@ namespace CampaignReportNs
 			_duplicates = 0;
 			for (int i = 0; i < files.Count; i++)
 			{
-				if (_report.AddSaveGame(files[i].File, ref _duplicates))
+				if (_report.AddSaveGame(files[i].File, ref _duplicates, _exportMapGif))
 					_processed++;
 				backgroundReport.ReportProgress(0, i+1);
 			}

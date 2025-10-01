@@ -1,11 +1,15 @@
-﻿using EsfLibrary;
-using EsfHelper;
+﻿using EsfHelper;
+using EsfLibrary;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CampaignReportNs
 {
@@ -14,12 +18,12 @@ namespace CampaignReportNs
 		private List<SeriesTurn> _turns = new List<SeriesTurn>();
 		private Helper.GameData _gameData;
 
-		public bool AddSaveGame(FileInfo inputFile, ref int duplicates)
+		public bool AddSaveGame(FileInfo inputFile, ref int duplicates, bool getMapImage)
 		{
 			EsfFile file = EsfCodecUtil.LoadEsfFile(inputFile.FullName);
 
 			// get turn number, discard if duplicate
-			var gameData = Helper.GetGameData(file.RootNode);
+			var gameData = Helper.GetGameData(file.RootNode, getMapImage);
 
 			if ((from entry in _turns
 				 where entry.Turn == gameData.Turn
@@ -32,7 +36,11 @@ namespace CampaignReportNs
 			{
 				var factionArrayNode = Helper.GetFactionArrayNode(file.RootNode);
 
-				var entry = new SeriesTurn() { Turn = gameData.Turn };
+				var entry = new SeriesTurn()
+				{
+					Turn = gameData.Turn,
+					Map = gameData.Map
+				};
 				_turns.Add(entry);
 
 				var regions = Helper.GetRegions(Helper.GetRegionArrayNode(file.RootNode));
@@ -53,6 +61,51 @@ namespace CampaignReportNs
 			StringBuilder sb = new StringBuilder();
 			produceReport(sb);
 			return sb.ToString();
+		}
+
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern bool DeleteObject(IntPtr hObject);
+
+		public void GetMapAnim(GifBitmapEncoder gifEnc)
+		{
+			var font = new System.Drawing.Font("Calibri", 16);
+			int textWidth = 100;
+			int textHeight = 20;
+			var sf = new StringFormat(StringFormat.GenericDefault);
+
+			var sorted = from turn in _turns
+						 orderby turn.Turn ascending
+						 select turn;
+			foreach (var turn in sorted)
+			{
+				// write the turn number onto the bitmap
+				using (Graphics gr = Graphics.FromImage(turn.Map))
+				{
+					var rect = new RectangleF(turn.Map.Width - textWidth, 20, textWidth, textHeight);
+					string text = string.Format("Turn {0}", turn.Turn);
+					gr.DrawString(text, font, Brushes.Black, rect, sf);
+				}
+
+				IntPtr bmp = turn.Map.GetHbitmap();
+				BitmapSource src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+					bmp,
+					IntPtr.Zero,
+					Int32Rect.Empty,
+					BitmapSizeOptions.FromEmptyOptions());
+
+				gifEnc.Frames.Add(BitmapFrame.Create(src));
+
+				// poor man's replay delay: add a few extra copies of the last frame
+				if (turn == sorted.Last())
+				{
+					for (int i = 0; i < 6; i++)
+					{
+						gifEnc.Frames.Add(BitmapFrame.Create(src));
+					}
+				}
+
+				DeleteObject(bmp);
+			}
 		}
 
 		private void produceReport(StringBuilder sb)

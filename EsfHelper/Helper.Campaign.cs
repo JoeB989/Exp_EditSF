@@ -2,12 +2,14 @@
 using System.Diagnostics.Metrics;
 using System.Text;
 using static EsfHelper.Helper;
+using System.Drawing;
 
 namespace EsfHelper
 {
 	public class SeriesTurn
 	{
 		public uint Turn;
+		public Bitmap Map;
 		public List<SeriesTurnFaction> Factions = new List<SeriesTurnFaction>();
 	}
 	public class SeriesTurnFaction
