@@ -29,17 +29,20 @@ namespace EsfHelper
 			}
 
 			// find characters that have an office
-			var government = FindChild(factionNode, "GOVERNMENT");
-			var postsNode = government.Children[0];
 			Dictionary<uint, string> officers = new Dictionary<uint, string>();
-			foreach (var posts in postsNode.Children)
+			var government = FindChild(factionNode, "GOVERNMENT");
+			if (government != null)
 			{
-				foreach (var post in posts.Children)
+				var postsNode = government.Children[0];
+				foreach (var posts in postsNode.Children)
 				{
-					string postName = ((StringNode)(post.Value[1])).Value;
-					uint charId = ((OptimizedUIntNode)(post.Value[2])).Value;
-					if (charId > 0)
-						officers.Add(charId, postName);
+					foreach (var post in posts.Children)
+					{
+						string postName = ((StringNode)(post.Value[1])).Value;
+						uint charId = ((OptimizedUIntNode)(post.Value[2])).Value;
+						if (charId > 0)
+							officers.Add(charId, postName);
+					}
 				}
 			}
 
@@ -66,25 +69,28 @@ namespace EsfHelper
 			}
 
 			// candidates from CHARACTER_RECRUITMENT_POOL
-			report.AppendLine("  Candidates");
 			var recruitmentPool = FindChild(factionNode, "CHARACTER_RECRUITMENT_POOL_MANAGER");
-			var poolBlock = recruitmentPool.Children[0].Children[0].Children[0].Children[0];
-			charIndex = 0;
-			List<CharacterInfo> candidates = new List<CharacterInfo>();
-			foreach (var poolEntry in poolBlock.Children)
+			if (recruitmentPool != null)
 			{
-				var characterNode = poolEntry.Children[0];
-				var candidate = GetCharacterInfo(characterNode, game_year, game_month,
-				officers, governors, familyTree);
+				report.AppendLine("  Candidates");
+				var poolBlock = recruitmentPool.Children[0].Children[0].Children[0].Children[0];
+				charIndex = 0;
+				List<CharacterInfo> candidates = new List<CharacterInfo>();
+				foreach (var poolEntry in poolBlock.Children)
+				{
+					var characterNode = poolEntry.Children[0];
+					var candidate = GetCharacterInfo(characterNode, game_year, game_month,
+					officers, governors, familyTree);
 
-				candidate.CharIndex = charIndex++;
-				candidate.CharNode = characterNode;
-				candidates.Add(candidate);
-			}
-			foreach (var candidate in candidates)
-			{
-				reportCharacter(candidate.CharNode, candidate, report,
-					game_year, game_month, officers, governors, familyTree, characters);
+					candidate.CharIndex = charIndex++;
+					candidate.CharNode = characterNode;
+					candidates.Add(candidate);
+				}
+				foreach (var candidate in candidates)
+				{
+					reportCharacter(candidate.CharNode, candidate, report,
+						game_year, game_month, officers, governors, familyTree, characters);
+				}
 			}
 		}
 
@@ -153,7 +159,8 @@ namespace EsfHelper
 			if (character.PoliticalParty.ToLower().Contains("_ruler"))
 			{
 				bool parentInFaction = (from c in characters
-										where c.CharId == character.FamilyTreeEntry.ParentId
+										where (character.FamilyTreeEntry != null) && 
+											  (c.CharId == character.FamilyTreeEntry.ParentId)
 										select c).Count() > 0;
 				// TODO: check if
 				//  parent is a live character in this faction

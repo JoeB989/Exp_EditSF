@@ -132,7 +132,14 @@ namespace EsfControl {
 		public void PlayerFactionReport()
 		{
             StringBuilder report = new StringBuilder();
-			Helper.OneFactionReportFromRoot(RootNode, 0, report);
+
+			var gameData = Helper.GetGameData(RootNode);
+
+			if (gameData.IsMP)
+				Helper.MultiplayerFactionsReportFromRoot(RootNode, report);
+			else
+                Helper.OneFactionReportFromRoot(RootNode, 0, report);
+
             show(report);
 		}
 
@@ -219,7 +226,12 @@ namespace EsfControl {
                     toolItem = CreateMenuItem("Move", selectedNode, MoveNode);
                     contextMenu.Items.Add(toolItem);
                 }
-                else if ((selectedNode != null) && (node.Text == "FACTION_ARRAY"))
+				else if ((selectedNode != null) && (node.Text == "REBEL_FACTION"))
+				{
+					var item = CreateMenuItem("Faction Report ...", selectedNode, OneFactionReport);
+					contextMenu.Items.Add(item);
+				}
+				else if ((selectedNode != null) && (node.Text == "FACTION_ARRAY"))
                 {
                     treeView.SelectedNode = node;
                     var item = CreateMenuItem("All Factions Economics ...", selectedNode, AllFactionEconomicsReport);
@@ -336,7 +348,7 @@ namespace EsfControl {
 		private void OneFactionReport(EsfNode factionEntryNode)
         {
 			StringBuilder report = new StringBuilder();
-			Helper.OneFactionReport(factionEntryNode, report);
+			Helper.OneFactionReport(null, factionEntryNode, report);
 			EditEsfComponent.show(report);
 		}
 

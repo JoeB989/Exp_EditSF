@@ -25,12 +25,39 @@ namespace EsfHelper
 			ShowFactionsReport(report, factions.ToArray(), familyTree, cfg);
 		}
 
-		static public void OneFactionReport(EsfNode factionEntryNode, StringBuilder report)
+		static public void MultipleFactionsReport(EsfNode factionArrayNode, ParentNode[] nodes, StringBuilder report)
 		{
-			GetAllFactions(factionEntryNode.Parent);
-			ParentNode worldNode = (ParentNode)factionEntryNode.Parent.Parent;
+			GetAllFactions(factionArrayNode);
+			ParentNode worldNode = (ParentNode)factionArrayNode.Parent;
 			ParentNode FamilyTreeNode = FindChild(worldNode, "FAMILY_TREE");
 			List<FamilyMember> familyTree = ScanFamilyTree(FamilyTreeNode);
+
+			//var nodes = new ParentNode[] {
+			//	((ParentNode)factionArrayNode).Children[0],
+			//	((ParentNode)factionArrayNode).Children[1]
+			//};
+			var cfg = new ReportConfig()
+			{
+				EconomicReport = true,
+				CharacterReport = true,
+				ArmyReport = true,
+				OmitGarrisons = true,
+				ShowDiplomacy = true,
+				IncludeBandits = true,
+			};
+			ShowFactionsReport(report, nodes, familyTree, cfg);
+		}
+
+		static public void OneFactionReport(EsfNode factionArrayNode, EsfNode factionEntryNode, StringBuilder report)
+		{
+			List<FamilyMember> familyTree = new List<FamilyMember>();
+			if (factionArrayNode != null)
+			{
+				GetAllFactions(factionArrayNode);
+				ParentNode worldNode = (ParentNode)factionArrayNode.Parent;
+				ParentNode FamilyTreeNode = FindChild(worldNode, "FAMILY_TREE");
+				familyTree = ScanFamilyTree(FamilyTreeNode);
+			}
 
 			ParentNode factionNode = ((ParentNode)factionEntryNode).Children[0];
 			var nodes = new ParentNode[] { factionNode };
@@ -41,6 +68,7 @@ namespace EsfHelper
 				ArmyReport = true,
 				OmitGarrisons = true,
 				ShowDiplomacy = true,
+				IncludeBandits = true,
 			};
 			ShowFactionsReport(report, nodes, familyTree, cfg);
 		}
@@ -52,6 +80,7 @@ namespace EsfHelper
 			public bool ArmyReport;
 			public bool OmitGarrisons;
 			public bool ShowDiplomacy;
+			public bool IncludeBandits;
 		}
 
 		public class GlobalEco
@@ -76,6 +105,26 @@ namespace EsfHelper
 
 			GlobalEco globalEco = new GlobalEco();
 
+			if (cfg.IncludeBandits)
+			{
+				string[] nodeHierarchy =
+				{
+					"COMPRESSED_DATA",
+					"CAMPAIGN_ENV",
+					"CAMPAIGN_MODEL",
+					"WORLD",
+					"REBEL_FACTION",
+					"FACTION",
+				};
+
+				ParentNode rebelsNode = WalkChildren(rootNode, nodeHierarchy);
+				if (rebelsNode != null)
+				{
+					List<ParentNode> newList = new List<ParentNode>(nodes);
+					nodes = newList.Append(rebelsNode).ToArray();
+				}
+			}
+
 			foreach (var factionNode in nodes)
 			{
 				buildFactionReport(factionNode, report, gameYear, gameMonth, familyTree, cfg, globalEco);
@@ -97,13 +146,23 @@ namespace EsfHelper
 			string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)gameData.GameMonth + 1);
 			uint display_year = gameData.GameYear - 752; // CA based year 0 off founding of Rome
 
-			report.AppendFormat("Save file: {0}\n    Difficulty {1}\n    Turn {2}, {3} {4}\n    Player faction: {5}\n",
-				SaveFileName, gameData.Difficulty, gameData.Turn, display_year, monthName, gameData.PlayerFaction);
+			if (gameData.IsMP)
+				report.Append("MP ");
+			report.AppendFormat("Save file: {0}\n    Difficulty {1}\n    Turn {2}, {3} {4}\n",
+				SaveFileName, gameData.Difficulty, gameData.Turn, display_year, monthName);
+			if (gameData.IsMP)
+				report.AppendFormat("    Player 1 faction: {0}\n    Player 2 faction: {1}\n",
+					gameData.PlayerFaction, gameData.Player2Faction);
+			else
+				report.AppendFormat("    Player faction: {0}\n",
+					gameData.PlayerFaction);
 		}
 
 		public class GameData 
 		{
+			public bool IsMP;
 			public string PlayerFaction;
+			public string Player2Faction;
 			public uint Turn;
 			public uint GameYear;
 			public uint GameMonth;
@@ -117,9 +176,21 @@ namespace EsfHelper
 			GameData gameData = new GameData();
 
 			var saveGameHeader = FindChild((ParentNode)rootNode, "SAVE_GAME_HEADER");
-			gameData.PlayerFaction = ((StringNode)saveGameHeader.Values[0]).Value;
-			gameData.Turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
-
+			if (saveGameHeader != null)
+			{
+				// Single player
+				gameData.PlayerFaction = ((StringNode)saveGameHeader.Values[0]).Value;
+				gameData.Turn = ((OptimizedUIntNode)saveGameHeader.Values[2]).Value;
+			}
+			else
+			{
+				// Multi-player
+				saveGameHeader = FindChild((ParentNode)rootNode, "SAVE_GAME_HEADER_MULTIPLAYER");
+				gameData.IsMP = true;
+				gameData.PlayerFaction = ((StringNode)saveGameHeader.Values[10]).Value;
+				gameData.Player2Faction = ((StringNode)saveGameHeader.Values[17]).Value;
+				gameData.Turn = ((OptimizedUIntNode)saveGameHeader.Values[3]).Value;
+			}
 			var dateNode = FindChild(saveGameHeader, "DATE");
 			gameData.GameYear = ((OptimizedUIntNode)dateNode.Values[0]).Value; // 752-based!  CA based year 0 off founding of Rome
 			gameData.GameMonth = ((OptimizedUIntNode)dateNode.Values[2]).Value; // 0-based
@@ -205,6 +276,13 @@ namespace EsfHelper
 
 			uint factionId = ((OptimizedUIntNode)(factionNode.Values[0])).Value;
 			string factionName = ((StringNode)(factionNode.Values[1])).Value;
+
+			bool isRebels = arrayNode.Name.StartsWith(RebelsTitle);
+			if (isRebels)
+			{
+				index = -1;
+				factionName = "REBELS";
+			}
 
 			// FACTION
 			//		CAMPAIGN_EFFECT_BUNDLES

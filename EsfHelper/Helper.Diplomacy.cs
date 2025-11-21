@@ -51,18 +51,21 @@ namespace EsfHelper
 				faction.Relationship = null;
 
 			var diploManager = FindChild(factionNode, "OLD_DIPLOMACY_MANAGER");
-			var relationshipArray = diploManager.Children[0];
-			foreach (var arrayEntry in relationshipArray.Children)
+			if (diploManager != null)
 			{
-				var factionRelationship = arrayEntry.Children[0];
-				uint factionId = ((OptimizedUIntNode)(factionRelationship.Values[0])).Value;
-				string relationship = ((StringNode)(factionRelationship.Values[3])).Value;
+				var relationshipArray = diploManager.Children[0];
+				foreach (var arrayEntry in relationshipArray.Children)
+				{
+					var factionRelationship = arrayEntry.Children[0];
+					uint factionId = ((OptimizedUIntNode)(factionRelationship.Values[0])).Value;
+					string relationship = ((StringNode)(factionRelationship.Values[3])).Value;
 
-				var f = (from faction in Factions
-						 where faction.Id == factionId
-						 select faction).FirstOrDefault();
-				if (f != null)
-					f.Relationship = relationship;
+					var f = (from faction in Factions
+							 where faction.Id == factionId
+							 select faction).FirstOrDefault();
+					if (f != null)
+						f.Relationship = relationship;
+				}
 			}
 		}
 	}

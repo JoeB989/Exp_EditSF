@@ -1,4 +1,6 @@
 ﻿using EsfLibrary;
+using System;
+using System.Reflection;
 using System.Text;
 
 namespace EsfHelper
@@ -29,19 +31,32 @@ namespace EsfHelper
 			if (rootNode == null)
 				return;
 			var factionNode = getFactionNode(rootNode, index);
-			OneFactionReport(factionNode, report);
+			OneFactionReport(GetFactionArrayNode(rootNode), factionNode, report);
+		}
+
+		static public void MultiplayerFactionsReportFromRoot(EsfNode rootNode, StringBuilder report)
+		{
+			if (rootNode == null)
+				return;
+
+			ParentNode factionArrayNode = GetFactionArrayNode(rootNode);
+			var nodes = new ParentNode[] {
+				getFactionNode(rootNode, 0).Children[0],
+				getFactionNode(rootNode, 1).Children[0]
+			};
+			MultipleFactionsReport(factionArrayNode, nodes, report);
 		}
 
 		static public void AllFactionEconomicsReport(EsfNode factionArrayNode, StringBuilder report)
 		{
 			AllFactionsReport(report, factionArrayNode,
-				new ReportConfig() { EconomicReport = true, ShowDiplomacy = true });
+				new ReportConfig() { EconomicReport = true, ShowDiplomacy = true, IncludeBandits = true });
 		}
 
 		static public void AllFactionCharactersReport(EsfNode factionArrayNode, StringBuilder report)
 		{
 			AllFactionsReport(report, factionArrayNode,
-				new ReportConfig() { CharacterReport = true });
+				new ReportConfig() { CharacterReport = true, IncludeBandits = true });
 		}
 
 		static public void VerificationReportFromRoot(EsfNode rootNode, StringBuilder report)
@@ -70,6 +85,7 @@ namespace EsfHelper
 		//  Common utility methods
 		//
 		const string FactionArrayTitle = "FACTION_ARRAY - ";
+		const string RebelsTitle = "REBEL_FACTION";
 
 		static private ParentNode getFactionNode(EsfNode rootNode, int index)
 		{
