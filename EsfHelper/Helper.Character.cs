@@ -102,6 +102,7 @@ namespace EsfHelper
 			public bool ShowCharacter;
 			public uint CharId;
 			public bool Deceased;
+			public bool Immortal;
 			public uint Influence;
 			public string Name;
 			public uint Rank;
@@ -192,7 +193,8 @@ namespace EsfHelper
 			//report.AppendFormat("      Debug info: id:{0} {1}\n", charId, nameKey);
 
 			// add other stuff to help disambiguate when name is wrong
-			report.AppendFormat("      Age {0}  Influence {1}", character.Age, character.Influence);
+			string immortal_string = character.Immortal ? "IMMORTAL  " : "";
+			report.AppendFormat("      Age {0}  {1}Influence {2}", character.Age, immortal_string, character.Influence);
 			report.AppendFormat("  Authority(Command) {0}", character.Authority);
 			report.AppendFormat("  Cunning(Management) {0}", character.Subterfuge);
 			report.AppendFormat("  Zeal(Leadership) {0}", character.Zeal);
@@ -228,6 +230,7 @@ namespace EsfHelper
 
 			var details = FindChild(characterNode, "CHARACTER_DETAILS");
 			character.Influence = ((OptimizedUIntNode)details.Values[15]).Value;
+			character.Immortal = ((OptimizedBoolNode)details.Values[20]).Value;
 
 			string nameKey = readNameKey(details);
 			if (string.IsNullOrWhiteSpace(nameKey))
